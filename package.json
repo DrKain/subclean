@@ -1,8 +1,8 @@
 {
     "name": "subclean",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "A CLI package to clean subtitle files of advertising",
-    "main": "index.js",
+    "main": "lib/index.js",
     "scripts": {
         "build": "tsc"
     },
@@ -20,6 +20,6 @@
     },
     "devDependencies": {},
     "bin": {
-        "subclean": "./index.js"
+        "subclean": "lib/index.js"
     }
 }
