@@ -1,1 +1,10 @@
-["opensubtitles", "streamingsites.com"]
+[
+    "opensubtitles",
+    "open subtitles",
+    "streamingsites.com",
+    "^subtitle created by",
+    "^subtitles created by",
+    "^subtitles by",
+    "subscene",
+    "rendering/synchronization"
+]
