@@ -3,9 +3,9 @@
         "target": "es5",
         "module": "commonjs",
         "declaration": true,
-        "outDir": "./",
+        "outDir": "./lib",
         "strict": true
     },
-    "include": ["index.ts"],
+    "include": ["src/index.ts"],
     "exclude": ["node_modules"]
 }

@@ -7,8 +7,11 @@ const argv = require('minimist')(process.argv.slice(2));
 
 class Subclean {
     public args: any;
+    private fd: string;
 
-    constructor() {}
+    constructor() {
+        this.fd = join(__dirname, '../filters');
+    }
 
     init() {
         this.prepare();
@@ -39,8 +42,7 @@ class Subclean {
             directory: argv.d || '',
             ext: 'srt',
             filter: argv.filter || argv.f || 'main',
-            _filter: '',
-            clean: argv.clean || false,
+            ci: argv.ci || false,
             debug: argv.debug || false,
         };
 
@@ -88,10 +90,7 @@ class Subclean {
         }
 
         // Make sure the filter file exists
-        this.args._filter = resolve(
-            __dirname + `/filters/${this.args.filter}.json`
-        );
-        if (!fs.existsSync(this.args._filter)) {
+        if (!fs.existsSync(join(this.fd, `${this.args.filter}.json`))) {
             this.kill(`Unable to find the filter: ${this.args.filter}`);
         }
 
@@ -103,9 +102,8 @@ class Subclean {
      */
     clean() {
         // Load the blacklist
-        if (this.args.debug) console.log('Filter: ' + this.args._filter);
         const blacklist = JSON.parse(
-            fs.readFileSync(this.args._filter, 'utf-8')
+            fs.readFileSync(join(this.fd, `${this.args.filter}.json`), 'utf-8')
         );
 
         // Parse the subtitle file
@@ -114,17 +112,29 @@ class Subclean {
         // Remove ads
         nodes.forEach((node: any, index) => {
             blacklist.forEach((mark: any) => {
-                if (node.data.text.toLowerCase().includes(mark)) {
-                    console.log(
-                        `[Match] Advertising found in node ${index} (${mark})`
-                    );
-                    node.data.text = '';
+                let regex = null;
+
+                if (mark.startsWith('^')) {
+                    regex = new RegExp(mark, 'i');
+                    if (regex.exec(node.data.text)) {
+                        console.log(
+                            `[Match] Advertising found in node ${index} (${regex})`
+                        );
+                        node.data.text = '';
+                    }
+                } else {
+                    if (node.data.text.toLowerCase().includes(mark)) {
+                        console.log(
+                            `[Match] Advertising found in node ${index} (${mark})`
+                        );
+                        node.data.text = '';
+                    }
                 }
             });
         });
 
         // Remove input file
-        if (this.args.clean) fs.unlinkSync(this.args.input);
+        if (this.args.ci) fs.unlinkSync(this.args.input);
 
         // Stringify cleaned subtitles
         const cleaned = stringifySync(nodes, {
