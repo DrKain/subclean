@@ -22,7 +22,7 @@ A CLI package to remove advertising from subtitle files. I originally created th
 | --output-file | -o    | Where the cleaned file will be written                                                                    | `subclean subtitle.srt -o cleaned.srt` |
 | --continue    | -c    | Overwrite the output file if it already exists                                                            | `subclean subtitle.srt -c`             |
 | --filter      | -f    | Select a filter file. This is currently useless as there's only one filter.                               | `subclean -f main`                     |
-|               | -ci   | Delete the input file before writing the output.                                                          | `subclean subtitle.srt --clean`        |
+| --ci          |       | Delete the input file before writing the output.                                                          | `subclean subtitle.srt --ci`           |
 | --debug       |       | Log the raw and processed arguments. If you post an issue please include a screenshot of the debug screen |
 
 **Filters**
