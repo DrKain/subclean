@@ -8,8 +8,12 @@ const argv = require('minimist')(process.argv.slice(2));
 class Subclean {
     public args: any;
     private fd: string;
+    private blacklist: string[];
+    private loaded: string[];
 
     constructor() {
+        this.blacklist = [];
+        this.loaded = [];
         this.fd = join(__dirname, '../filters');
     }
 
@@ -23,16 +27,37 @@ class Subclean {
      * Kill the script after printing an error
      * @param e Error Message
      */
-    kill(e: string) {
-        console.error(`[Error] ${e}`);
+    kill(e: string, err = true) {
+        if (err) console.error(`[Error] ${e}`);
+        else console.log(e);
         process.exit(0);
+    }
+
+    help() {
+        this.kill([
+            '|---------------------------------------------------------------------------|',
+            '|---------------------------  subclean arguments ---------------------------|',
+            '|---------------------------------------------------------------------------|',
+            '| --input-file  | ( -i ) | The file you want to clean                       |',
+            '| --output-file | ( -o ) | Where the cleaned subtitle file will be written  |',
+            '| --continue    | ( -c ) | Overwrite the output file if it already exists   |',
+            '| --ci          |        | Delete the input file before writing the output  |',
+            '| --debug       |        | Display extra debugging information              |',
+            '| --help        |        | Show the text you\'re reading now                |',
+            '|---------------------------------------------------------------------------|',
+            '|         Example: subclean subtitle.srt -o cleaned.en.srt                  |',
+            '|---------------------------------------------------------------------------|'
+        ].join('\n'), false)
     }
 
     /**
      * Prepare the arguments and defaults
      */
     prepare() {
-        if (!argv._.length && !argv.i) this.kill('Missing arguments');
+        if (!argv._.length && !argv.i) {
+            if (argv.help) this.help();
+            else this.kill('Missing arguments');
+        }
 
         // Parse the required arguments from short or long parameters
         this.args = {
@@ -40,7 +65,7 @@ class Subclean {
             output: argv.o || argv['output-file'] || '',
             continue: argv.c || argv.continue || false,
             directory: argv.d || '',
-            ext: 'srt',
+            ext: '.srt',
             filter: argv.filter || argv.f || 'main',
             ci: argv.ci || false,
             debug: argv.debug || false,
@@ -98,35 +123,72 @@ class Subclean {
     }
 
     /**
+     * Load all the items in a blacklist filter into the current blacklist
+     * TODO: Unload? Maybe.
+     * @param filter Name of the blacklist filter
+     */
+    loadBlacklist(filter: string) {
+        if (this.loaded.includes(filter)) return;
+        try {
+
+            const items = JSON.parse(
+                fs.readFileSync(join(this.fd, `${filter}.json`), 'utf-8')
+            )
+            this.blacklist = [...this.blacklist, ...items];
+            this.loaded.push(filter);
+
+            if (this.args.debug) {
+                console.log(`[Filter] Added ${items.length} items from filter ${filter}`);
+            }
+        } catch (e) {
+            console.log('[Error] Failed to load a filter: ' + filter);
+        }
+    }
+
+    /**
+     * Add your own items to the blacklist. Currently not used. 
+     * Needs to be passed a file name to read
+     * @param items Array of stings
+     */
+    public addBlacklistItems(items: string[]) {
+        this.blacklist = [...this.blacklist, ...items];
+        console.log(`[Filter] Added ${items.length} custom blacklist items`);
+    }
+
+    /**
      * Clean the subtitle file, then write the output
      */
     clean() {
         // Load the blacklist
-        const blacklist = JSON.parse(
-            fs.readFileSync(join(this.fd, `${this.args.filter}.json`), 'utf-8')
-        );
+        this.loadBlacklist('main');
+        this.loadBlacklist('users');
+        this.loadBlacklist(this.args.filter);
 
         // Parse the subtitle file
         const nodes = parseSync(fs.readFileSync(this.args.input, 'utf-8'));
 
         // Remove ads
         nodes.forEach((node: any, index) => {
-            blacklist.forEach((mark: any) => {
+            this.blacklist.forEach((mark: any) => {
                 let regex = null;
 
                 if (mark.startsWith('^')) {
                     regex = new RegExp(mark, 'i');
                     if (regex.exec(node.data.text)) {
-                        console.log(
-                            `[Match] Advertising found in node ${index} (${regex})`
-                        );
+                        if (this.args.debug) {
+                            console.log(`[Match] [Debug] ${node.data.text}`);
+                        } else {
+                            console.log(`[Match] Advertising found in node ${index} (${mark})`);
+                        }
                         node.data.text = '';
                     }
                 } else {
                     if (node.data.text.toLowerCase().includes(mark)) {
-                        console.log(
-                            `[Match] Advertising found in node ${index} (${mark})`
-                        );
+                        if (this.args.debug) {
+                            console.log(`[Match] [Debug] ${node.data.text}`);
+                        } else {
+                            console.log(`[Match] Advertising found in node ${index} (${mark})`);
+                        }
                         node.data.text = '';
                     }
                 }
