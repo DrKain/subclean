@@ -2,7 +2,9 @@
 
 [![NPM](https://img.shields.io/npm/v/subclean)](https://www.npmjs.com/package/subclean) [![NPM](https://img.shields.io/npm/dt/subclean)](https://www.npmjs.com/package/subclean)
 
-## **What is this?\***
+![Preview](https://i.imgur.com/ki2Au6v.png)  
+
+## **What is this?**
 
 A CLI package to remove advertising from subtitle files. I originally created this for my Plex server to quickly remove the ads opensubtitles puts in their subtitle files.
 It's very simple to use and should get rid of most subtitle ads or branding without disrupting the subtitles themselves.  
@@ -13,7 +15,7 @@ It's very simple to use and should get rid of most subtitle ads or branding with
 
 **Basic Use:**
 
-`subclean subtitle.srt`
+`subclean subtitle.srt` 
 
 **Advanced Use:**
 
@@ -29,5 +31,4 @@ It's very simple to use and should get rid of most subtitle ads or branding with
 
 **Filters:**
 
-I will be adding to the [main filter](https://github.com/DrKain/subclean/blob/main/filters/main.json) as I encounter new ads. If you would like to contribute you are welcome to create a PR.  
-If you start a filter with `^` it will use regex and match from the start of the line. This was for credits like `Subtitles by JoBoggles`. I will probably change this to allow any regex at some point.
+There's currently two filters available. Since this is a personal project I haven't found the need to include any more but contributions are welcome.  
