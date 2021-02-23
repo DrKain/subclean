@@ -1,14 +1,51 @@
 #! /usr/bin/env node
 import * as fs from 'fs';
 import { dirname, join, resolve, extname } from 'path';
-import { parseSync, stringifySync } from 'subtitle';
+import { parseSync, stringifySync, Format } from 'subtitle';
 
 const argv = require('minimist')(process.argv.slice(2));
+const updateNotifier = require('update-notifier');
+const pkg = require('../package.json');
+const version = pkg.version;
+const notifier = updateNotifier({
+    pkg, updateCheckInterval: 1000 * 60 * 60
+});
+
+interface IArguments {
+    // User Input
+    input: string;
+    output: string;
+    overwrite: boolean;
+    clean: boolean;
+    debug: boolean;
+    version: boolean;
+    help: boolean;
+    nocheck: boolean;
+    silent: boolean;
+
+    // Set by code
+    ext: string;
+    directory: string;
+}
 
 class Subclean {
-    public args: any;
+    public args = {
+        input: '',
+        output: '',
+        overwrite: false,
+        clean: false,
+        debug: false,
+        version: version,
+        help: false,
+        nocheck: false,
+        silent: false,
+        directory: '',
+        ext: 'srt',
+    };
+
     private fd: string;
     private blacklist: string[];
+    private supported: string[] = ['srt', 'vtt'];
     private loaded: string[];
 
     constructor() {
@@ -23,13 +60,18 @@ class Subclean {
         this.clean();
     }
 
+    log(msg: any) {
+        if (!this.args.silent) {
+            console.log(msg);
+        }
+    }
+
     /**
      * Kill the script after printing an error
      * @param e Error Message
      */
     kill(e: string, err = true) {
-        if (err) console.error(`[Error] ${e}`);
-        else console.log(e);
+        this.log((err ? '[Error] ' : '') + `${e}`);
         process.exit(0);
     }
 
@@ -38,12 +80,15 @@ class Subclean {
             '|---------------------------------------------------------------------------|',
             '|---------------------------  subclean arguments ---------------------------|',
             '|---------------------------------------------------------------------------|',
-            '| --input-file  | ( -i ) | The file you want to clean                       |',
-            '| --output-file | ( -o ) | Where the cleaned subtitle file will be written  |',
-            '| --continue    | ( -c ) | Overwrite the output file if it already exists   |',
-            '| --ci          |        | Delete the input file before writing the output  |',
+            '| --input       | ( -i ) | The file you want to clean                       |',
+            '| --output      | ( -o ) | Where the cleaned subtitle file will be written  |',
+            '| --overwrite   | ( -w ) | Overwrite the output file if it already exists   |',
+            '| --clean       | ( -c ) | Delete the input file before writing the output  |',
             '| --debug       |        | Display extra debugging information              |',
-            '| --help        |        | Show the text you\'re reading now                |',
+            '| --version     | ( -v ) | Print the current package version                |',
+            '| --help        |        | Show the text you\'re reading now                 |',
+            '| --no-check    | ( -n ) | Don\'t check for a new package version            |',
+            '| --silent      | ( -s ) | Silent mode. Nothing logged to console           |',
             '|---------------------------------------------------------------------------|',
             '|         Example: subclean subtitle.srt -o cleaned.en.srt                  |',
             '|---------------------------------------------------------------------------|'
@@ -54,24 +99,41 @@ class Subclean {
      * Prepare the arguments and defaults
      */
     prepare() {
-        if (!argv._.length && !argv.i) {
-            if (argv.help) this.help();
-            else this.kill('Missing arguments');
-        }
-
+        if (argv.help) this.help();
         // Parse the required arguments from short or long parameters
         this.args = {
-            input: argv._.shift() || argv.i || argv['input-file'] || '',
-            output: argv.o || argv['output-file'] || '',
-            continue: argv.c || argv.continue || false,
-            directory: argv.d || '',
-            ext: '.srt',
-            filter: argv.filter || argv.f || 'main',
-            ci: argv.ci || false,
-            debug: argv.debug || false,
-        };
+            input: (argv._.shift() || argv.i || argv['input'] || ''),
+            output: (argv.o || argv['output'] || ''),
+            overwrite: (!!argv.w || !!argv.overwrite),
+            clean: (!!argv.c || !!argv.clean),
+            debug: (!!argv.debug),
+            help: (!!argv.help),
+            nocheck: (!!argv.n || !!argv['no-check']),
+            silent: (!!argv.silent || !!argv.s),
+            version: (!!argv.version || !!argv.v)
+        } as IArguments;
 
-        if (this.args.debug) console.log('prepared arguments');
+        // Debugging
+        if (this.args.debug) {
+            this.log(JSON.stringify(this.args));
+            this.log(JSON.stringify(argv));
+        }
+
+        if (!this.args.nocheck) {
+            if (notifier.update) {
+                this.log(`[Info] Update available: ${pkg.version} -> ${notifier.update.latest}`);
+                this.log('[Info] https://github.com/DrKain/subclean/releases');
+            }
+        }
+
+        if (this.args.version) {
+            return this.kill('You are using subclean@' + pkg.version, false);
+        }
+
+        // Make sure the user actually passed an input file
+        if (this.args.input === '') {
+            return this.kill('Missing arguments. Use --help for details', true);
+        }
     }
 
     /**
@@ -83,20 +145,16 @@ class Subclean {
 
         // Detect the directory and file extension
         this.args.directory = dirname(this.args.input);
-        this.args.ext = extname(this.args.input);
+        this.args.ext = extname(this.args.input).substr(1);
+
+        if (!this.supported.includes(this.args.ext)) {
+            this.kill(`Subtitle format ${this.args.ext} not supported.`, true);
+        }
 
         // If an output file is not set, generate a default path
         if (this.args.output === '') {
-            this.args.output = join(
-                this.args.directory,
-                `output${this.args.ext}`
-            );
-        }
-
-        // Use -debug
-        if (this.args.debug) {
-            console.log(argv);
-            console.log(this.args);
+            // You will still need to enable --overwrite to overwrite the file
+            this.args.output = this.args.input;
         }
 
         // Make sure the input file exists
@@ -110,16 +168,11 @@ class Subclean {
         }
 
         // Prevent accidentally overwriting a file
-        if (fs.existsSync(this.args.output) && this.args.continue === false) {
-            this.kill(`Ouput file already exists. Use -c to overwrite`);
+        if (fs.existsSync(this.args.output) && this.args.overwrite === false) {
+            this.kill(`Ouput file already exists. Pass -w to overwrite`);
         }
 
-        // Make sure the filter file exists
-        if (!fs.existsSync(join(this.fd, `${this.args.filter}.json`))) {
-            this.kill(`Unable to find the filter: ${this.args.filter}`);
-        }
-
-        if (this.args.debug) console.log('arguments validated');
+        if (this.args.debug) this.log('Arguments validated');
     }
 
     /**
@@ -134,14 +187,15 @@ class Subclean {
             const items = JSON.parse(
                 fs.readFileSync(join(this.fd, `${filter}.json`), 'utf-8')
             )
+
             this.blacklist = [...this.blacklist, ...items];
             this.loaded.push(filter);
 
             if (this.args.debug) {
-                console.log(`[Filter] Added ${items.length} items from filter ${filter}`);
+                this.log(`[Filter] Added ${items.length} items from filter ${filter}`);
             }
         } catch (e) {
-            console.log('[Error] Failed to load a filter: ' + filter);
+            this.log('[Error] Failed to load a filter: ' + filter);
         }
     }
 
@@ -152,7 +206,7 @@ class Subclean {
      */
     public addBlacklistItems(items: string[]) {
         this.blacklist = [...this.blacklist, ...items];
-        console.log(`[Filter] Added ${items.length} custom blacklist items`);
+        this.log(`[Filter] Added ${items.length} custom blacklist items`);
     }
 
     /**
@@ -162,7 +216,6 @@ class Subclean {
         // Load the blacklist
         this.loadBlacklist('main');
         this.loadBlacklist('users');
-        this.loadBlacklist(this.args.filter);
 
         // Parse the subtitle file
         const nodes = parseSync(fs.readFileSync(this.args.input, 'utf-8'));
@@ -176,18 +229,18 @@ class Subclean {
                     regex = new RegExp(mark, 'i');
                     if (regex.exec(node.data.text)) {
                         if (this.args.debug) {
-                            console.log(`[Match] [Debug] ${node.data.text}`);
+                            this.log(`[Match] [Debug] ${node.data.text}`);
                         } else {
-                            console.log(`[Match] Advertising found in node ${index} (${mark})`);
+                            this.log(`[Match] Advertising found in node ${index} (${mark})`);
                         }
                         node.data.text = '';
                     }
                 } else {
                     if (node.data.text.toLowerCase().includes(mark)) {
                         if (this.args.debug) {
-                            console.log(`[Match] [Debug] ${node.data.text}`);
+                            this.log(`[Match] [Debug] ${node.data.text}`);
                         } else {
-                            console.log(`[Match] Advertising found in node ${index} (${mark})`);
+                            this.log(`[Match] Advertising found in node ${index} (${mark})`);
                         }
                         node.data.text = '';
                     }
@@ -196,16 +249,16 @@ class Subclean {
         });
 
         // Remove input file
-        if (this.args.ci) fs.unlinkSync(this.args.input);
+        if (this.args.clean) fs.unlinkSync(this.args.input);
 
         // Stringify cleaned subtitles
         const cleaned = stringifySync(nodes, {
-            format: this.args.ext.replace(/./g, ''),
+            format: this.args.ext as Format
         });
 
         // Write the file
         fs.writeFileSync(this.args.output, cleaned);
-        console.log(`[Done] Wrote to ${this.args.output}`);
+        this.log(`[Done] Wrote to ${this.args.output}`);
     }
 }
 
