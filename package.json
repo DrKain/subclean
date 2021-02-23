@@ -1,6 +1,6 @@
 {
     "name": "subclean",
-    "version": "1.0.10",
+    "version": "1.1.0",
     "description": "A CLI package to clean subtitle files of advertising",
     "main": "lib/index.js",
     "scripts": {
@@ -10,7 +10,8 @@
         "subtitle",
         "clean",
         "advertising",
-        "cli"
+        "cli",
+        "bazarr"
     ],
     "author": "Kain (ksir.pw)",
     "license": "MIT",
@@ -19,6 +20,9 @@
         "subtitle": "^4.0.1"
     },
     "devDependencies": {},
+    "pkg": {
+        "assets": "filters/**/*"
+    },
     "bin": {
         "subclean": "lib/index.js"
     }

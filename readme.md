@@ -27,8 +27,10 @@ It's very simple to use and should get rid of most subtitle ads or branding with
 | --filter      | -f    | Select a filter file. This is currently useless as there's only one filter.                               | `subclean -f main`                     |
 | --ci          |       | Delete the input file before writing the output.                                                          | `subclean subtitle.srt --ci`           |
 | --debug       |       | Log the raw and processed arguments. If you post an issue please include a screenshot of the debug screen |                                        |
-| --help        |       | Displays a message in the console with most of the text above, excluding the examples for each            |                                        |
-
-**Filters:**
-
-There's currently two filters available. Since this is a personal project I haven't found the need to include any more but contributions are welcome.  
+| --help        |       | Displays a message in the console with most of the text above, excluding the examples for each            |                                        |   
+  
+**Bazarr**  
+If you want to use this in [Bazarr](https://github.com/morpheus65535/bazarr), grab the latest build from the [releases](https://github.com/DrKain/subclean/releases) page.  
+Do not use npm to install globally, Bazarr will not be able to run it.  
+  
+Then in `Settings -> Subtitles` you can add the following command to the post-processing section: `subclean "{{subtitles}}" -o "{{subtitles}}" --ci --continue 2>&1`  
