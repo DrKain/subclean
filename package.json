@@ -1,11 +1,12 @@
 {
     "name": "subclean",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "description": "A CLI package to clean subtitle files of advertising",
     "main": "lib/index.js",
     "scripts": {
         "build": "tsc",
-        "build-bin": "pkg ."
+        "build-bin": "pkg .",
+        "zip": "ts-node postbuild.ts"
     },
     "keywords": [
         "subtitle",
@@ -21,7 +22,9 @@
         "subtitle": "^4.0.1",
         "update-notifier": "^5.1.0"
     },
-    "devDependencies": {},
+    "devDependencies": {
+        "fs-extra": "^9.1.0"
+    },
     "pkg": {
         "out-path": "./bin/",
         "assets": [
