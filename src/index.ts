@@ -23,7 +23,7 @@ interface IArguments {
     nocheck: boolean;
     silent: boolean;
 
-    // Set by code
+    // Set by code, do not change
     ext: string;
     directory: string;
 }
