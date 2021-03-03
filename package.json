@@ -4,9 +4,7 @@
     "description": "A CLI package to clean subtitle files of advertising",
     "main": "lib/index.js",
     "scripts": {
-        "build": "tsc",
-        "build-bin": "pkg .",
-        "zip": "ts-node postbuild.ts"
+        "build": "tsc && pkg . && ts-node postbuild.ts"
     },
     "keywords": [
         "subtitle",
