@@ -219,6 +219,7 @@ class Subclean {
 
         // Parse the subtitle file
         const nodes = parseSync(fs.readFileSync(this.args.input, 'utf-8'));
+        let hits = 0;
 
         // Remove ads
         nodes.forEach((node: any, index) => {
@@ -232,6 +233,7 @@ class Subclean {
                             this.log(`[Match] [Debug] ${node.data.text}`);
                         } else {
                             this.log(`[Match] Advertising found in node ${index} (${mark})`);
+                            hits++;
                         }
                         node.data.text = '';
                     }
@@ -241,6 +243,7 @@ class Subclean {
                             this.log(`[Match] [Debug] ${node.data.text}`);
                         } else {
                             this.log(`[Match] Advertising found in node ${index} (${mark})`);
+                            hits++;
                         }
                         node.data.text = '';
                     }
@@ -257,8 +260,12 @@ class Subclean {
         });
 
         // Write the file
-        fs.writeFileSync(this.args.output, cleaned);
-        this.log(`[Done] Wrote to ${this.args.output}`);
+        if (hits > 0) {
+            fs.writeFileSync(this.args.output, cleaned);
+            this.log(`[Done] Removed ${hits} node(s) and wrote to ${this.args.output}`);
+        } else {
+            this.log('[Done] No advertising found');
+        }
     }
 }
 
