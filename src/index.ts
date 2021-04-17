@@ -8,7 +8,8 @@ const updateNotifier = require('update-notifier');
 const pkg = require('../package.json');
 const version = pkg.version;
 const notifier = updateNotifier({
-    pkg, updateCheckInterval: 1000 * 60 * 60
+    pkg,
+    updateCheckInterval: 1000 * 60 * 60
 });
 
 interface IArguments {
@@ -40,7 +41,7 @@ class Subclean {
         nocheck: false,
         silent: false,
         directory: '',
-        ext: 'srt',
+        ext: 'srt'
     };
 
     private fd: string;
@@ -76,23 +77,26 @@ class Subclean {
     }
 
     help() {
-        this.kill([
-            '|---------------------------------------------------------------------------|',
-            '|---------------------------  subclean arguments ---------------------------|',
-            '|---------------------------------------------------------------------------|',
-            '| --input       | ( -i ) | The file you want to clean                       |',
-            '| --output      | ( -o ) | Where the cleaned subtitle file will be written  |',
-            '| --overwrite   | ( -w ) | Overwrite the output file if it already exists   |',
-            '| --clean       | ( -c ) | Delete the input file before writing the output  |',
-            '| --debug       |        | Display extra debugging information              |',
-            '| --version     | ( -v ) | Print the current package version                |',
-            '| --help        |        | Show the text you\'re reading now                 |',
-            '| --no-check    | ( -n ) | Don\'t check for a new package version            |',
-            '| --silent      | ( -s ) | Silent mode. Nothing logged to console           |',
-            '|---------------------------------------------------------------------------|',
-            '|         Example: subclean subtitle.srt -o cleaned.en.srt                  |',
-            '|---------------------------------------------------------------------------|'
-        ].join('\n'), false)
+        this.kill(
+            [
+                '|---------------------------------------------------------------------------|',
+                '|---------------------------  subclean arguments ---------------------------|',
+                '|---------------------------------------------------------------------------|',
+                '| --input       | ( -i ) | The file you want to clean                       |',
+                '| --output      | ( -o ) | Where the cleaned subtitle file will be written  |',
+                '| --overwrite   | ( -w ) | Overwrite the output file if it already exists   |',
+                '| --clean       | ( -c ) | Delete the input file before writing the output  |',
+                '| --debug       |        | Display extra debugging information              |',
+                '| --version     | ( -v ) | Print the current package version                |',
+                "| --help        |        | Show the text you're reading now                 |",
+                "| --no-check    | ( -n ) | Don't check for a new package version            |",
+                '| --silent      | ( -s ) | Silent mode. Nothing logged to console           |',
+                '|---------------------------------------------------------------------------|',
+                '|         Example: subclean subtitle.srt -o cleaned.en.srt                  |',
+                '|---------------------------------------------------------------------------|'
+            ].join('\n'),
+            false
+        );
     }
 
     /**
@@ -102,15 +106,15 @@ class Subclean {
         if (argv.help) this.help();
         // Parse the required arguments from short or long parameters
         this.args = {
-            input: (argv._.shift() || argv.i || argv['input'] || ''),
-            output: (argv.o || argv['output'] || ''),
-            overwrite: (!!argv.w || !!argv.overwrite),
-            clean: (!!argv.c || !!argv.clean),
-            debug: (!!argv.debug),
-            help: (!!argv.help),
-            nocheck: (!!argv.n || !!argv['no-check']),
-            silent: (!!argv.silent || !!argv.s),
-            version: (!!argv.version || !!argv.v)
+            input: argv._.shift() || argv.i || argv['input'] || '',
+            output: argv.o || argv['output'] || '',
+            overwrite: !!argv.w || !!argv.overwrite,
+            clean: !!argv.c || !!argv.clean,
+            debug: !!argv.debug,
+            help: !!argv.help,
+            nocheck: !!argv.n || !!argv['no-check'],
+            silent: !!argv.silent || !!argv.s,
+            version: !!argv.version || !!argv.v
         } as IArguments;
 
         // Debugging
@@ -183,10 +187,7 @@ class Subclean {
     loadBlacklist(filter: string) {
         if (this.loaded.includes(filter)) return;
         try {
-
-            const items = JSON.parse(
-                fs.readFileSync(join(this.fd, `${filter}.json`), 'utf-8')
-            )
+            const items = JSON.parse(fs.readFileSync(join(this.fd, `${filter}.json`), 'utf-8'));
 
             this.blacklist = [...this.blacklist, ...items];
             this.loaded.push(filter);
@@ -200,7 +201,7 @@ class Subclean {
     }
 
     /**
-     * Add your own items to the blacklist. Currently not used. 
+     * Add your own items to the blacklist. Currently not used.
      * Needs to be passed a file name to read
      * @param items Array of stings
      */

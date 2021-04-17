@@ -25,7 +25,7 @@ const files = [
     {
         target: 'subclean-win.exe',
         output: 'subclean.exe',
-        zipname: `subclean-${version}-win.zip`,
+        zipname: `subclean-${version}-win.zip`
     }
 ];
 
@@ -43,6 +43,6 @@ const dothings = async () => {
         await fs.unlinkSync(file.output);
         console.log(`[${file.target}] Removed junk files`);
     }
-}
+};
 
 dothings();

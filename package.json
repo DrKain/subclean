@@ -1,6 +1,6 @@
 {
     "name": "subclean",
-    "version": "1.2.3",
+    "version": "1.2.4",
     "description": "A CLI package to clean subtitle files of advertising",
     "main": "lib/index.js",
     "scripts": {
@@ -11,7 +11,10 @@
         "clean",
         "advertising",
         "cli",
-        "bazarr"
+        "bazarr",
+        "windows",
+        "linux",
+        "mac"
     ],
     "author": "Kain (ksir.pw)",
     "license": "MIT",
@@ -21,7 +24,9 @@
         "update-notifier": "^5.1.0"
     },
     "devDependencies": {
-        "fs-extra": "^9.1.0"
+        "fs-extra": "^9.1.0",
+        "pkg": "^4.5.1",
+        "typescript": "^4.2.4"
     },
     "pkg": {
         "out-path": "./bin/",
