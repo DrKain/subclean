@@ -1,2 +1,2 @@
-*.js linguist-detectable=false
-*.ts linguist-detectable=true
+*.js linguist-vendored
+*.ts linguist-language=TypeScript
