@@ -7,10 +7,6 @@ const argv = require('minimist')(process.argv.slice(2));
 const updateNotifier = require('update-notifier');
 const pkg = require('../package.json');
 const version = pkg.version;
-const notifier = updateNotifier({
-    pkg,
-    updateCheckInterval: 1000 * 60 * 60
-});
 
 interface IArguments {
     // User Input
@@ -77,6 +73,7 @@ class Subclean {
     }
 
     help() {
+        // TODO: Format this better
         this.kill(
             [
                 '|---------------------------------------------------------------------------|',
@@ -105,6 +102,7 @@ class Subclean {
     prepare() {
         if (argv.help) this.help();
         // Parse the required arguments from short or long parameters
+        // TODO: Map arg types instead of !!
         this.args = {
             input: argv._.shift() || argv.i || argv['input'] || '',
             output: argv.o || argv['output'] || '',
@@ -124,6 +122,7 @@ class Subclean {
         }
 
         if (!this.args.nocheck) {
+            const notifier = updateNotifier({ pkg, updateCheckInterval: 1000 * 60 * 60 });
             if (notifier.update) {
                 this.log(`[Info] Update available: ${pkg.version} -> ${notifier.update.latest}`);
                 this.log('[Info] https://github.com/DrKain/subclean/releases');
