@@ -13,7 +13,8 @@ It's very simple to use and should get rid of most subtitle ads or branding with
 
 `npm install -g subclean`
 
-Or grab a pre-built binary from the [releases](https://github.com/DrKain/subclean/releases) page (win, linux, mac).
+Or grab a pre-built binary from the [releases](https://github.com/DrKain/subclean/releases) page (win, linux, mac).  
+Or you can built it yourself: `npm install && npm run build`
 
 #### Basic Use:
 
