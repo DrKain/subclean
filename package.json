@@ -1,9 +1,10 @@
 {
     "name": "subclean",
-    "version": "1.2.5",
+    "version": "1.2.6",
     "description": "A CLI package to clean subtitle files of advertising",
     "main": "lib/index.js",
     "scripts": {
+        "ver": "nvm use 14.18.0",
         "build": "tsc && pkg . && ts-node postbuild.ts"
     },
     "keywords": [
