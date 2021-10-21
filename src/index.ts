@@ -218,7 +218,12 @@ class Subclean {
         this.loadBlacklist('users');
 
         // Parse the subtitle file
-        const nodes = parseSync(fs.readFileSync(this.args.input, 'utf-8'));
+        let fileData = fs.readFileSync(this.args.input, 'utf-8');
+
+        // Remove all cases of \r (parser can not handle these)
+        fileData = fileData.replace(/\r/g, ' ');
+
+        const nodes = parseSync(fileData);
         let hits = 0;
 
         // Remove ads
