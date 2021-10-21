@@ -2,7 +2,7 @@
 
 [![NPM](https://img.shields.io/npm/v/subclean)](https://www.npmjs.com/package/subclean) [![NPM](https://img.shields.io/npm/dt/subclean)](https://www.npmjs.com/package/subclean)
 
-![Preview](https://i.imgur.com/ki2Au6v.png)
+![Preview](https://i.imgur.com/iM9UWzw.png)
 
 ## What is this?
 
