@@ -18,7 +18,7 @@ Or you can built it yourself: `npm install && npm run build`
 
 #### Basic Use:
 
-`subclean subtitle.srt`
+`subclean subtitle.srt -w`
 
 #### Command Arguments:
 
