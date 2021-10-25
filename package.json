@@ -5,7 +5,9 @@
     "main": "lib/index.js",
     "scripts": {
         "ver": "nvm use 14.18.0",
-        "build": "tsc && pkg . && ts-node postbuild.ts"
+        "build": "tsc && pkg . && ts-node postbuild.ts",
+        "test": "ts-node src/exp.ts",
+        "test2": "ts-node src/exp.ts --sweep D:\\Media --debug"
     },
     "keywords": [
         "subtitle",
