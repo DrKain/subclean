@@ -32,6 +32,8 @@ This will recursively look through sub-directories for subtitle files and add th
 Once the file collection is complete, each subtitle file will be cleaned one by one.  
 The cleaned file will overwrite the existing file.
 
+Take a look at the [depth map](https://github.com/DrKain/subclean/wiki/Bulk-Cleaning#depth-map) for a visual guide on what depth to use.
+
 ```
 subclean --sweep "path/to/media" --depth 5
 ```
