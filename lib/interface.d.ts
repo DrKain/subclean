@@ -46,9 +46,6 @@ export interface IArguments {
      * Defaults to 10
      */
     depth: number;
-
-    // Set by code, do not change
-
     /**
      * File extension. Used to check for .vtt or .srt
      */
