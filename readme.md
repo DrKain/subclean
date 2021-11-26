@@ -9,13 +9,16 @@
 A CLI package to remove advertising from subtitle files. I originally created this for my Plex server to quickly remove the ads opensubtitles puts in their subtitle files.
 It's very simple to use and should get rid of most subtitle ads or branding without disrupting the subtitles themselves. If you want to use this with Bazarr scroll down to the bottom of the readme.
 
-### Install:
+### Download:
+
+Downloads for Windows, Linux or Mac are on the [releases](https://github.com/DrKain/subclean/releases) page.
+
+### NodeJS Install:
 
 ```
 npm install -g subclean
 ```
 
-Or grab a pre-built binary from the [releases](https://github.com/DrKain/subclean/releases) page (win, linux, mac).  
 Or you can build it yourself: `npm install && npm run build`
 
 ### Basic Use:
