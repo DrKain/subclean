@@ -9,8 +9,25 @@ const pkg = require('./package.json');
 const version = pkg.version;
 const path = require('path');
 
+// Empty the build directory
 fs.emptyDir('./bin');
 
+// Function to sort filters alphabetically
+const sortFilter = (file: string) => {
+    if (!fs.existsSync(file)) return console.log(`[${file}] File does not exist`);
+
+    const $data = JSON.parse(fs.readFileSync(file, 'utf8'));
+    const $sorted = $data.sort((a: any, b: any) => a.localeCompare(b));
+
+    fs.writeFileSync(file, JSON.stringify($sorted, null, 2));
+    console.log(`[${file}] Sorted`);
+};
+
+// Sort both filters
+sortFilter('./filters/main.json');
+sortFilter('./filters/users.json');
+
+// Data for target builds and file names
 const files = [
     {
         target: 'subclean-linux',
@@ -29,7 +46,8 @@ const files = [
     }
 ];
 
-const dothings = async () => {
+// Build the binaries then compress them for github release
+const compress = async () => {
     for (let file of files) {
         console.log(`[${file.target}] Processing`);
 
@@ -45,4 +63,5 @@ const dothings = async () => {
     }
 };
 
-dothings();
+// To avoid an error if we don't have the binaries
+if (fs.existsSync(files[0].target)) compress();
