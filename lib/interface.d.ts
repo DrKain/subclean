@@ -47,6 +47,10 @@ export interface IArguments {
      */
     depth: number;
     /**
+     * Download new filters from GitHub
+     */
+    update: boolean;
+    /**
      * File extension. Used to check for .vtt or .srt
      */
     ext: string;

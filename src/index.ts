@@ -1,8 +1,9 @@
 #! /usr/bin/env node
-import { statSync, existsSync, readdirSync, readFileSync, writeFileSync, unlinkSync } from 'fs';
+import { statSync, existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from 'fs';
 import { dirname, join, resolve, extname, basename } from 'path';
 import { parseSync, stringifySync, Format } from 'subtitle';
 import { help_text } from './help';
+import { get } from 'https';
 import { IArguments } from './interface';
 
 const argv = require('minimist')(process.argv.slice(2));
@@ -28,6 +29,7 @@ class SubClean {
             nocheck: argv.n || argv['no-check'] || false,
             silent: argv.silent || argv.s || false,
             version: argv.version || argv.v || false,
+            update: argv.update || false,
             sweep: argv.sweep || null,
             depth: argv.depth ?? 10
         } as IArguments;
@@ -121,9 +123,16 @@ class SubClean {
             // Display help message
             if (this.args.help) this.help();
 
+            // Download filters
+            if (this.args.update) {
+                await this.updateFilters();
+                this.kill('[Info] Updated all filters', false);
+            }
+
             // Notify if there's a new update
             if (!this.args.nocheck) {
                 const notifier = updateNotifier({ pkg, updateCheckInterval: 1000 * 60 * 60 });
+
                 if (notifier.update) {
                     this.log(`[Info] Update available: ${pkg.version} -> ${notifier.update.latest}`);
                     this.log('[Info] https://github.com/DrKain/subclean/releases');
@@ -205,7 +214,21 @@ class SubClean {
     public loadBlacklist(filter: string) {
         if (this.loaded.includes(filter)) return;
         try {
-            const items = JSON.parse(readFileSync(join(this.fd, `${filter}.json`), 'utf-8'));
+            // We want to use appdata for this if possible
+            let target = join(this.getPath(), 'filters', `${filter}.json`);
+
+            // If the appdata file doesn't exist, use the internal filters
+            if (!existsSync(target)) target = join(this.fd, `${filter}.json`);
+
+            // If it still doesn't exist, return
+            if (!existsSync(target)) {
+                if (filter !== 'custom') {
+                    this.log('[Info] Unable to locate filter: ' + filter);
+                }
+                return;
+            }
+
+            const items = JSON.parse(readFileSync(target, 'utf-8'));
 
             this.blacklist = [...this.blacklist, ...items];
             this.loaded.push(filter);
@@ -281,10 +304,73 @@ class SubClean {
         });
     }
 
+    public getPath() {
+        let target = '';
+
+        switch (process.platform) {
+            case 'win32':
+                target = join(process.env.APPDATA ?? process.env.LOCALAPPDATA ?? '', 'subclean');
+                break;
+            case 'darwin':
+                target = join(process.env.HOME ?? '', 'Library', 'Application Support', 'subclean');
+                break;
+            default:
+                target = join(process.env.HOME ?? '', 'subclean');
+                break;
+        }
+
+        return target;
+    }
+
+    public downloadFilter(name: string) {
+        return new Promise((resolve) => {
+            let url = `https://raw.githubusercontent.com/DrKain/subclean/main/filters/${name}.json`;
+            let save_to = join(this.getPath(), 'filters', `${name}.json`);
+            let current = 0;
+
+            if (existsSync(save_to)) current = statSync(save_to).size;
+
+            get(url, (res) => {
+                let data = '';
+                res.on('data', (chunk) => (data += chunk));
+                res.on('end', () => {
+                    writeFileSync(save_to, data);
+
+                    if (statSync(save_to).size !== current) {
+                        this.log(`[Info] Downloaded new filters for: ${name}`);
+                    }
+
+                    resolve(name);
+                });
+            }).on('error', (err) => {
+                this.log(`[Error] ${err}`);
+                resolve(false);
+            });
+        });
+    }
+
+    public async updateFilters() {
+        let $app = this.getPath();
+        let $filters = join($app, 'filters');
+
+        try {
+            // Ensure user directories exist
+            if (!existsSync($app)) mkdirSync($app);
+            if (!existsSync($filters)) mkdirSync($filters);
+
+            // Download both filters
+            await this.downloadFilter('main');
+            await this.downloadFilter('users');
+        } catch (error) {
+            this.log(`[Error] ${error}`);
+        }
+    }
+
     public async init() {
         // Load the blacklist
         this.loadBlacklist('main');
         this.loadBlacklist('users');
+        this.loadBlacklist('custom');
         // Prepare files
         await this.prepare();
 
