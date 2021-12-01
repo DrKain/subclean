@@ -39,16 +39,19 @@ Take a look at the [depth map](https://github.com/DrKain/subclean/wiki/Bulk-Clea
 
 ```
 subclean --sweep "path/to/media" --depth 5
-```
-
-### Quickly:
-
-This will quickly clean all subtitle files in the current directory.
-This will **not** look in sub-directories.
-
-```
+// or
 subclean --sweep .
 ```
+
+### Update Filters
+
+When you run `subclean --update` new filters will be downloaded from GitHub.
+The location of these files may differ depending on what OS you are using.
+If the downloaded filters do not exist or can not be accessed the internal filters will be used instead
+
+### Custom filters
+
+You can create `custom.json` alongside the downloaded filters. Subclean will automatically load this and apply it when cleaning. You can verify this is being loaded by running `subclean --debug`. You should see a message like `Loaded n filters from custom`
 
 ### Command Arguments:
 
@@ -65,6 +68,7 @@ subclean --sweep .
 | --sweep     |       | Sweep a directory (and sub-dirs) to clean multiple files at once     |
 | --depth     |       | Limit how many sub-dirs deep --sweep will go. Default = 10, Max = 25 |
 | --silent    | -s    | Silent mode. Nothing logged to console                               |
+| --update    |       | Download new filters from GitHub                                     |
 
 ### Bazarr
 
