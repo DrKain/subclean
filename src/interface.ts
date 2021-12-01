@@ -46,6 +46,10 @@ export interface IArguments {
      * Defaults to 10
      */
     depth: number;
+    /**
+     * Download new filters from GitHub
+     */
+    update: boolean;
 
     // Set by code, do not change
 

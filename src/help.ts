@@ -14,9 +14,13 @@ Options:
   -n, --no-check   Don't check for a new package version
   -s, --silent     Silent mode. Nothing logged to console
       --debug      Display extra debugging information
+      --update     Download the latest filters from GitHub
+                   This will not update subclean, only the filters!
+
       --sweep      Bulk subtitle cleaning. Searches for subtitles
                    in multiple directories (and sub-directories)
                    This will enable --overwrite!
+
       --depth      How many sub-directories to look when sweep cleaning
       --help       Show the text you're reading now
 `;
