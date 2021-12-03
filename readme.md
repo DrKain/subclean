@@ -1,91 +1,90 @@
-# subclean
+# [![subclean](https://raw.githubusercontent.com/DrKain/subclean/main/text-logo.png)](#)
 
 [![NPM](https://img.shields.io/npm/v/subclean)](https://www.npmjs.com/package/subclean) [![NPM](https://img.shields.io/npm/dt/subclean)](https://www.npmjs.com/package/subclean)
+[![Documentation](https://img.shields.io/badge/documentation-yes-brightgreen.svg)](https://github.com/DrKain/subclean/wiki)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/DrKain/subclean/graphs/commit-activity)
+[![License: MIT](https://img.shields.io/github/license/DrKain/subclean)](https://github.com/DrKain/subclean/blob/master/LICENSE)
+
+> A powerful CLI tool to remove advertising from subtitle files. Made for personal media servers with full support for automation tools like Bazarr. Simple to use and frequently updated with new filters.  
 
 ![Preview](https://i.imgur.com/iM9UWzw.png)
 
-## What is this?
+## Download
 
-A CLI package to remove advertising from subtitle files. I originally created this for my Plex server to quickly remove the ads opensubtitles puts in their subtitle files.
-It's very simple to use and should get rid of most subtitle ads or branding without disrupting the subtitles themselves. If you want to use this with Bazarr scroll down to the bottom of the readme.
-
-### Download:
-
-Downloads for Windows, Linux or Mac are on the [releases](https://github.com/DrKain/subclean/releases) page.
-
-### NodeJS Install:
-
-```
+Downloads for Windows, Linux and Mac can be found on the [releases](https://github.com/DrKain/subclean/releases) page.  
+Alternatively, you can install using NodeJS:  
+```sh
 npm install -g subclean
 ```
 
 Or you can build it yourself: `npm install && npm run build`
 
-### Basic Use:
+## Usage
 
-This cleans the target file. `-w` overwrites the existing file.
-
-```
-subclean subtitle.srt -w
-```
-
-### Clean everything:
-
-This will recursively look through sub-directories for subtitle files and add them to a queue.
-Once the file collection is complete, each subtitle file will be cleaned one by one.  
-The cleaned file will overwrite the existing file.
-
-Take a look at the [depth map](https://github.com/DrKain/subclean/wiki/Bulk-Cleaning#depth-map) for a visual guide on what depth to use.
+If using Bazarr, please see the [wiki page](https://github.com/DrKain/subclean/wiki/Bazarr).  
 
 ```
+Usage: subclean [options]
+Single: subclean subtitle.srt -w
+Bulk: subclean --sweep "path/to/media"
+
+Options:
+  -i, --input      The file you want to clean
+  -o, --output     Where to write the cleaned file (defaults to input)
+  -w, --overwrite  Overwrite the output file if it already exists
+  -c, --clean      Delete the input file before writing the output
+  -v, --version    Display current version
+  -n, --no-check   Don't check for a new package version
+  -s, --silent     Silent mode. Nothing logged to console
+      --debug      Display extra debugging information
+      --update     Download the latest filters from GitHub
+                   This will not update subclean, only the filters!
+
+      --sweep      Bulk subtitle cleaning. Searches for subtitles
+                   in multiple directories (and sub-directories)
+                   This will enable --overwrite!
+
+      --depth      How many sub-directories to look when sweep cleaning
+      --help       Show the text you're reading now
+```
+
+## 🧹 Bulk Cleaning
+
+Scans for subtitle files and cleans them one by one.  
+Depth is optional. Take a look at the [depth map](https://github.com/DrKain/subclean/wiki/Bulk-Cleaning#depth-map) for a visual guide on what depth to use.  
+
+```sh
 subclean --sweep "path/to/media" --depth 5
 // or
 subclean --sweep .
 ```
 
-### Update Filters
+## 📝 Filters  
 
 When you run `subclean --update` new filters will be downloaded from GitHub.
 The location of these files may differ depending on what OS you are using.
 If the downloaded filters do not exist or can not be accessed the internal filters will be used instead
 
-### Custom filters
+You can create `custom.json` alongside the downloaded filters. Subclean will automatically load this and apply it when cleaning. You can verify this is being loaded by running `subclean --debug`. You should see a message similar to `Loaded n filters from custom`
 
-You can create `custom.json` alongside the downloaded filters. Subclean will automatically load this and apply it when cleaning. You can verify this is being loaded by running `subclean --debug`. You should see a message like `Loaded n filters from custom`
 
-### Command Arguments:
+## 👤 Author
 
-| Argument    | Short | Description                                                          |
-| :---------- | :---- | :------------------------------------------------------------------- |
-| --input     | -i    | The file you want to clean                                           |
-| --output    | -o    | Where the cleaned subtitle file will be written                      |
-| --overwrite | -w    | Overwrite the output file if it already exists                       |
-| --clean     | -c    | Delete the input file before writing the output                      |
-| --debug     |       | Display extra debugging information                                  |
-| --version   | -v    | Print the current package version                                    |
-| --help      |       | Show the text you're reading now                                     |
-| --no-check  | -n    | Don't check for a new package version                                |
-| --sweep     |       | Sweep a directory (and sub-dirs) to clean multiple files at once     |
-| --depth     |       | Limit how many sub-dirs deep --sweep will go. Default = 10, Max = 25 |
-| --silent    | -s    | Silent mode. Nothing logged to console                               |
-| --update    |       | Download new filters from GitHub                                     |
+This project was made by **Kain (ksir.pw)**
 
-### Bazarr
+-   Website: [ksir.pw](https://ksir.pw)
+-   Github: [@DrKain](https://github.com/DrKain)
 
-See the Wiki entry for [Bazarr](https://github.com/DrKain/subclean/wiki/Bazarr)
+## 🤝 Contributing
 
-### Optimization
+Contributions, issues and feature requests are welcome and greatly appreciated.  
+Feel free to check [issues page](https://github.com/DrKain/subclean/issues). 
 
-Currently not needed.  
-With 100 unique filters subclean can process 20,000 nodes from 10 files in under a second.
+## Show your support
 
-### GUI
+Give a ⭐️ if this project helped you!
 
-Currently not available. I might look into this in the future.
+## 📝 License
 
-### Lastly:
-
-Subclean is not complete! See [here](https://github.com/DrKain/subclean/issues?q=is%3Aopen+is%3Aissue+label%3Aenhancement) for planned features.
-
-Want to help with this project? Feel like you can improve on the code? Feel free to PR any changes to both the package or the filter lists. Any help is greatly appreciated.  
-A [Wiki](https://github.com/DrKain/subclean/wiki) is under construction with some basic information. Feel free to contribute there too.
+Copyright © 2021 [Kain (ksir.pw)](https://github.com/DrKain).
+This project is [MIT](https://github.com/DrKain/subclean/blob/master/LICENSE) licensed.
