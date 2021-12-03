@@ -39,5 +39,13 @@
     },
     "bin": {
         "subclean": "lib/index.js"
-    }
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/DrKain/subclean.git"
+    },
+    "bugs": {
+        "url": "https://github.com/DrKain/subclean/issues"
+    },
+    "homepage": "https://github.com/DrKain/subclean#readme"
 }
