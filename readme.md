@@ -5,14 +5,15 @@
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/DrKain/subclean/graphs/commit-activity)
 [![License: MIT](https://img.shields.io/github/license/DrKain/subclean)](https://github.com/DrKain/subclean/blob/master/LICENSE)
 
-> A powerful CLI tool to remove advertising from subtitle files. Made for personal media servers with full support for automation tools like Bazarr. Simple to use and frequently updated with new filters.  
+> A powerful CLI tool to remove advertising from subtitle files. Made for personal media servers with full support for automation tools like Bazarr. Simple to use and frequently updated with new filters.
 
 ![Preview](https://i.imgur.com/iM9UWzw.png)
 
 ## Download
 
 Downloads for Windows, Linux and Mac can be found on the [releases](https://github.com/DrKain/subclean/releases) page.  
-Alternatively, you can install using NodeJS:  
+Alternatively, you can install using NodeJS:
+
 ```sh
 npm install -g subclean
 ```
@@ -21,7 +22,7 @@ Or you can build it yourself: `npm install && npm run build`
 
 ## Usage
 
-If using Bazarr, please see the [wiki page](https://github.com/DrKain/subclean/wiki/Bazarr).  
+If using Bazarr, please see the [wiki page](https://github.com/DrKain/subclean/wiki/Bazarr).
 
 ```
 Usage: subclean [options]
@@ -51,22 +52,21 @@ Options:
 ## 🧹 Bulk Cleaning
 
 Scans for subtitle files and cleans them one by one.  
-Depth is optional. Take a look at the [depth map](https://github.com/DrKain/subclean/wiki/Bulk-Cleaning#depth-map) for a visual guide on what depth to use.  
+Depth is optional. Take a look at the [depth map](https://github.com/DrKain/subclean/wiki/Bulk-Cleaning#depth-map) for a visual guide on what depth to use.
 
 ```sh
 subclean --sweep "path/to/media" --depth 5
 // or
-subclean --sweep .
+subclean --sweep
 ```
 
-## 📝 Filters  
+## 📝 Filters
 
 When you run `subclean --update` new filters will be downloaded from GitHub.
 The location of these files may differ depending on what OS you are using.
 If the downloaded filters do not exist or can not be accessed the internal filters will be used instead
 
 You can create `custom.json` alongside the downloaded filters. Subclean will automatically load this and apply it when cleaning. You can verify this is being loaded by running `subclean --debug`. You should see a message similar to `Loaded n filters from custom`
-
 
 ## 👤 Author
 
@@ -78,7 +78,7 @@ This project was made by **Kain (ksir.pw)**
 ## 🤝 Contributing
 
 Contributions, issues and feature requests are welcome and greatly appreciated.  
-Feel free to check [issues page](https://github.com/DrKain/subclean/issues). 
+Feel free to check [issues page](https://github.com/DrKain/subclean/issues).
 
 ## Show your support
 
