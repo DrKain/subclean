@@ -35,7 +35,7 @@ class SubClean {
         } as IArguments;
 
         if (typeof this.args.sweep !== 'string') {
-            this.args.sweep = __dirname;
+            this.args.sweep = '.';
         }
 
         this.fd = join(__dirname, '../filters');
@@ -166,7 +166,7 @@ class SubClean {
                 this.args.sweep = resolve(this.args.sweep);
 
                 if (this.args.debug) {
-                    this.log('[Info] Sweep target: ' + __dirname);
+                    this.log('[Info] Sweep target: ' + this.args.sweep);
                     this.log('[Info] Depth: ' + this.args.depth);
                 }
 
