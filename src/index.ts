@@ -30,9 +30,13 @@ class SubClean {
             silent: argv.silent || argv.s || false,
             version: argv.version || argv.v || false,
             update: argv.update || false,
-            sweep: argv.sweep || null,
+            sweep: argv.sweep || '',
             depth: argv.depth ?? 10
         } as IArguments;
+
+        if (typeof this.args.sweep !== 'string') {
+            this.args.sweep = '.';
+        }
 
         this.fd = join(__dirname, '../filters');
         this.blacklist = [];
@@ -160,6 +164,12 @@ class SubClean {
             if (this.args.sweep) {
                 // Validate the sweep directory exists
                 this.args.sweep = resolve(this.args.sweep);
+
+                if (this.args.debug) {
+                    this.log('[Info] Sweep target: ' + this.args.sweep);
+                    this.log('[Info] Depth: ' + this.args.depth);
+                }
+
                 if (!existsSync(this.args.sweep)) this.kill(`${this.args.sweep} is not a valid path`, true);
 
                 // Fetch files and add them to the queue
@@ -374,7 +384,7 @@ class SubClean {
         // Prepare files
         await this.prepare();
 
-        this.log('[Info] Starting queue...\n');
+        if (this.queue.length > 1) this.log('[Info] Starting queue...\n');
 
         for (let index in this.queue) {
             let item = this.queue[index];
