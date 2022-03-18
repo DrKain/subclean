@@ -1,6 +1,6 @@
 {
     "name": "subclean",
-    "version": "1.3.4",
+    "version": "1.3.5",
     "description": "A CLI package to clean subtitle files of advertising",
     "main": "lib/index.js",
     "scripts": {
