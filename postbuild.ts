@@ -19,7 +19,10 @@ const sortFilter = (file: string) => {
     const $data = JSON.parse(fs.readFileSync(file, 'utf8'));
     const $sorted = $data.sort((a: any, b: any) => a.localeCompare(b));
 
-    fs.writeFileSync(file, JSON.stringify($sorted, null, 2));
+    // De-dupe $sorted
+    const $dedupe = $sorted.filter((item: any, index: number) => $sorted.indexOf(item) === index);
+
+    fs.writeFileSync(file, JSON.stringify($dedupe, null, 2));
     console.log(`[${file}] Sorted`);
 };
 
