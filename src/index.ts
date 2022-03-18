@@ -157,7 +157,7 @@ class SubClean {
             // TODO: Custom regex match for getFiles() to properly support wildcards
             if (this.args.input === '*') {
                 this.args.depth = 1;
-                this.args.sweep = __dirname;
+                this.args.sweep = '.';
             }
 
             // Fetch files for multi-cleaning
