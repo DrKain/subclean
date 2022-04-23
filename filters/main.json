@@ -1,7 +1,7 @@
 [
   "[gwc]",
   "/(encoded|resync)\\s*(by|:)/",
-  "/(gmail|outlook|hotmail|pm\\.me|protonmail)/",
+  "/(gmail|outlook\\.com|hotmail|pm\\.me|protonmail)/",
   "/^.::\\s*(sync|timings|transcript)/",
   "/^ripped (and|&) corrected by/",
   "/^subtitle(s|) created by/",
