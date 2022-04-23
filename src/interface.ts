@@ -61,4 +61,14 @@ export interface IArguments {
      * Directory of the subtitle file
      */
     directory: string;
+    /*
+    Delete empty nodes instead of blanking the text
+    */
+    ne: boolean;
+    /**
+     * When true the file will not be saved but all cleaning will be logged.
+     * This is for testing to ensure the script is working without having to create a new
+     * subtitle file every time.
+     */
+    testing: boolean;
 }
