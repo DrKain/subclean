@@ -105,3 +105,6 @@ dist
 
 # Exclude prebuilt binaries
 bin/
+
+# Test file
+subtitle.srt
