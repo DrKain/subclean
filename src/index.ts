@@ -18,7 +18,15 @@ class SubClean {
     public loaded: string[];
     public queue: IArguments[];
 
+    // For debugging
+    private timer: string = '[Debug] Finished in';
+    private actions_count: number = 0;
+    private nodes_count: number = 0;
+    private filter_count: number = 0;
+    private log_data: string = '';
+
     constructor() {
+        console.time(this.timer);
         this.args = {
             input: argv._.shift() || argv.i || argv['input'] || '',
             output: argv.o || argv['output'] || '',
@@ -31,11 +39,17 @@ class SubClean {
             version: argv.version || argv.v || false,
             update: argv.update || false,
             sweep: argv.sweep || '',
-            depth: argv.depth ?? 10
+            depth: argv.depth ?? 10,
+            ne: argv['ne'] || false,
+            testing: argv.testing || false
         } as IArguments;
 
         if (typeof this.args.sweep !== 'string') {
             this.args.sweep = '.';
+        }
+
+        if (this.args.testing === true) {
+            this.log('[Info] Testing is enabled! File will not be saved');
         }
 
         this.fd = join(__dirname, '../filters');
@@ -85,6 +99,7 @@ class SubClean {
      */
     public log(msg: any) {
         if (!this.args.silent) console.log(msg);
+        this.log_data += `${msg}\n`;
     }
 
     /**
@@ -215,6 +230,17 @@ class SubClean {
         }
     }
 
+    private writeLogs() {
+        try {
+            const target = join(this.getPath(), 'logs', 'latest.txt');
+            writeFileSync(target, this.log_data);
+            console.log('[Debug] Logs written to ' + target);
+        } catch (error) {
+            console.log('Unable to write logs');
+            console.log(`${error}`);
+        }
+    }
+
     /**
      * Load all the items in a blacklist filter into the current blacklist
      * TODO: Move filters to appdata
@@ -228,7 +254,10 @@ class SubClean {
             let target = join(this.getPath(), 'filters', `${filter}.json`);
 
             // If the appdata file doesn't exist, use the internal filters
-            if (!existsSync(target)) target = join(this.fd, `${filter}.json`);
+            if (!existsSync(target) || this.args.debug === true) {
+                this.log('[Info] Using internal filters');
+                target = join(this.fd, `${filter}.json`);
+            }
 
             // If it still doesn't exist, return
             if (!existsSync(target)) {
@@ -244,6 +273,7 @@ class SubClean {
             this.loaded.push(filter);
 
             if (this.args.debug) {
+                this.filter_count += items.length;
                 this.log(`[Filter] Added ${items.length} items from filter ${filter}`);
             }
         } catch (e) {
@@ -268,21 +298,28 @@ class SubClean {
                 const nodes = parseSync(fileData);
                 let hits = 0;
 
+                // For debugging
+                this.nodes_count += nodes.length;
+
                 // Remove ads
                 nodes.forEach((node: any, index) => {
                     this.blacklist.forEach((mark: any) => {
                         let regex = null;
+                        this.actions_count++;
 
-                        if (mark.startsWith('^')) {
-                            regex = new RegExp(mark, 'i');
+                        if (mark.startsWith('/') && mark.endsWith('/')) {
+                            // remove first and last characters
+                            regex = new RegExp(mark.substring(1, mark.length - 1), 'i');
                             if (regex.exec(node.data.text)) {
-                                this.log(`[Match] Advertising found in node ${index} (${mark})`);
+                                this.log(`[Match] Advertising found in node ${index + 1} (${mark})`);
+                                if (this.args.debug) this.log('[Line] ' + node.data.text);
                                 hits++;
                                 node.data.text = '';
                             }
                         } else {
                             if (node.data.text.toLowerCase().includes(mark)) {
-                                this.log(`[Match] Advertising found in node ${index} (${mark})`);
+                                this.log(`[Match] Advertising found in node ${index + 1} (${mark})`);
+                                if (this.args.debug) this.log('[Line] ' + node.data.text);
                                 hits++;
                                 node.data.text = '';
                             }
@@ -290,17 +327,41 @@ class SubClean {
                     });
                 });
 
+                // Remove empty nodes when requested
+                if (this.args.ne) {
+                    const deleted_nodes: number[] = [];
+                    nodes.forEach((node: any, index) => {
+                        if (node.data.text === '') {
+                            deleted_nodes.push(index + 1);
+                            delete nodes[index];
+                        }
+                    });
+                    this.log(`[Info] Removed empty nodes: ${deleted_nodes.join(', ')}`);
+                }
+
                 // Remove input file
-                if (item.clean) unlinkSync(item.input);
+                if (item.clean && this.args.testing == false) {
+                    unlinkSync(item.input);
+                }
 
                 // Stringify cleaned subtitles
                 const cleaned = stringifySync(nodes, { format: item.ext as Format });
 
                 // Write cleaned file
-                writeFileSync(item.output, cleaned);
+                if (this.args.testing === false) {
+                    writeFileSync(item.output, cleaned);
+                }
 
-                if (hits > 0) this.log(`[Done] Removed ${hits} node(s) and wrote to ${item.output}\n`);
+                if (hits > 0) this.log(`[Done] Removed ${hits} node(s) and wrote to ${item.output}`);
                 else this.log('[Done] No advertising found\n');
+
+                if (this.args.debug) {
+                    console.timeEnd(this.timer);
+                    this.log('[Debug] ' + this.actions_count.toLocaleString() + ' actions performed');
+                    this.log('[Debug] ' + this.filter_count.toLocaleString() + ' filters applied');
+                    this.log('[Debug] ' + this.nodes_count.toLocaleString() + ' text nodes');
+                    this.writeLogs();
+                }
 
                 // Resolve the promise
                 done(item);
@@ -317,6 +378,7 @@ class SubClean {
     public getPath() {
         let target = '';
 
+        // NOTE: This was suggested by github co-pilot and is untested.
         switch (process.platform) {
             case 'win32':
                 target = join(process.env.APPDATA ?? process.env.LOCALAPPDATA ?? '', 'subclean');
@@ -359,15 +421,23 @@ class SubClean {
         });
     }
 
+    private ensureDirs() {
+        let $app = this.getPath();
+        let $filters = join($app, 'filters');
+        let $logs = join($app, 'logs');
+        // Ensure user directories exist
+        if (!existsSync($app)) mkdirSync($app);
+        if (!existsSync($filters)) mkdirSync($filters);
+        if (!existsSync($logs)) mkdirSync($logs);
+    }
+
     public async updateFilters() {
         let $app = this.getPath();
         let $filters = join($app, 'filters');
+        let $logs = join($app, 'logs');
 
         try {
-            // Ensure user directories exist
-            if (!existsSync($app)) mkdirSync($app);
-            if (!existsSync($filters)) mkdirSync($filters);
-
+            this.ensureDirs();
             // Download both filters
             await this.downloadFilter('main');
             await this.downloadFilter('users');
@@ -377,6 +447,7 @@ class SubClean {
     }
 
     public async init() {
+        this.ensureDirs();
         // Load the blacklist
         this.loadBlacklist('main');
         this.loadBlacklist('users');
@@ -393,7 +464,7 @@ class SubClean {
             let name = basename(item.input);
             if (this.args.debug) name = item.input;
 
-            this.log(`[${+index + 1}/${this.queue.length}] Cleaning "${name}"`);
+            this.log(`[Clean] [${+index + 1}/${this.queue.length}] Cleaning "${name}"`);
             try {
                 await this.cleanFile(item);
             } catch (error) {
