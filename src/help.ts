@@ -23,4 +23,6 @@ Options:
 
       --depth      How many sub-directories to look when sweep cleaning
       --help       Show the text you're reading now
+      --ne         No Empty (nodes). Deletes empty nodes after cleaning.
+      --testing    Testing mode. Will not modify files.
 `;
