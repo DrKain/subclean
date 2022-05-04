@@ -32,8 +32,8 @@ Bulk: subclean --sweep "path/to/media"
 Options:
   -i, --input      The file you want to clean
   -o, --output     Where to write the cleaned file (defaults to input)
-  -w, --overwrite  Overwrite the output file if it already exists
-  -c, --clean      Delete the input file before writing the output
+  -w, --overwrite  Overwrite the output file if it already exists     
+  -c, --clean      Delete the input file before writing the output    
   -v, --version    Display current version
   -n, --no-check   Don't check for a new package version
   -s, --silent     Silent mode. Nothing logged to console
@@ -47,6 +47,8 @@ Options:
 
       --depth      How many sub-directories to look when sweep cleaning
       --help       Show the text you're reading now
+      --ne         No Empty (nodes). Deletes empty nodes after cleaning.
+      --testing    Testing mode. Will not modify files.
 ```
 
 ## 🧹 Bulk Cleaning
