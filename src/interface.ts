@@ -71,4 +71,8 @@ export interface IArguments {
      * subtitle file every time.
      */
     testing: boolean;
+    /**
+     * Use filters: appdata or internal
+     */
+    uf: 'default' | 'appdata' | 'internal';
 }

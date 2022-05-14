@@ -13,7 +13,6 @@ Options:
   -v, --version    Display current version
   -n, --no-check   Don't check for a new package version
   -s, --silent     Silent mode. Nothing logged to console
-      --debug      Display extra debugging information
       --update     Download the latest filters from GitHub
                    This will not update subclean, only the filters!
 
@@ -21,8 +20,12 @@ Options:
                    in multiple directories (and sub-directories)
                    This will enable --overwrite!
 
+      v- You likely do not need to use these -v
+
       --depth      How many sub-directories to look when sweep cleaning
+      --debug      Display extra debugging information
       --help       Show the text you're reading now
       --ne         No Empty (nodes). Deletes empty nodes after cleaning.
       --testing    Testing mode. Will not modify files.
+      --uf         Use Filter: internal or appdata
 `;

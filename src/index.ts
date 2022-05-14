@@ -26,7 +26,6 @@ class SubClean {
     private log_data: string = '';
 
     constructor() {
-        console.time(this.timer);
         this.args = {
             input: argv._.shift() || argv.i || argv['input'] || '',
             output: argv.o || argv['output'] || '',
@@ -41,7 +40,9 @@ class SubClean {
             sweep: argv.sweep || '',
             depth: argv.depth ?? 10,
             ne: argv['ne'] || false,
-            testing: argv.testing || false
+
+            testing: argv.testing || false,
+            uf: argv.uf || 'default'
         } as IArguments;
 
         if (typeof this.args.sweep !== 'string') {
@@ -251,12 +252,18 @@ class SubClean {
         if (this.loaded.includes(filter)) return;
         try {
             // We want to use appdata for this if possible
+            let internal = false;
             let target = join(this.getPath(), 'filters', `${filter}.json`);
 
+            // Let people know where subclean is looking for
+            if (this.args.debug && this.args.uf === 'appdata') {
+                this.log('[Debug] Checking: ' + target);
+            }
+
             // If the appdata file doesn't exist, use the internal filters
-            if (!existsSync(target) || this.args.debug === true) {
-                this.log('[Info] Using internal filters');
+            if (!existsSync(target) || this.args.uf === 'internal') {
                 target = join(this.fd, `${filter}.json`);
+                internal = true;
             }
 
             // If it still doesn't exist, return
@@ -274,7 +281,7 @@ class SubClean {
 
             if (this.args.debug) {
                 this.filter_count += items.length;
-                this.log(`[Filter] Added ${items.length} items from filter ${filter}`);
+                this.log(`[Filter] [${internal ? 'int' : 'app'}] Added ${items.length} items from filter '${filter}'`);
             }
         } catch (e) {
             this.log('[Error] Failed to load a filter: ' + filter);
@@ -336,7 +343,10 @@ class SubClean {
                             delete nodes[index];
                         }
                     });
-                    this.log(`[Info] Removed empty nodes: ${deleted_nodes.join(', ')}`);
+                    // Only log if we actually deleted nodes
+                    if (deleted_nodes.length > 0) {
+                        this.log(`[Info] Removed empty nodes: ${deleted_nodes.join(', ')}`);
+                    }
                 }
 
                 // Remove input file
@@ -356,8 +366,7 @@ class SubClean {
                 else this.log('[Done] No advertising found\n');
 
                 if (this.args.debug) {
-                    console.timeEnd(this.timer);
-                    this.log('[Debug] ' + this.actions_count.toLocaleString() + ' actions performed');
+                    this.log('[Debug] ' + this.actions_count.toLocaleString() + ' checks');
                     this.log('[Debug] ' + this.filter_count.toLocaleString() + ' filters applied');
                     this.log('[Debug] ' + this.nodes_count.toLocaleString() + ' text nodes');
                     this.writeLogs();
@@ -464,7 +473,11 @@ class SubClean {
             let name = basename(item.input);
             if (this.args.debug) name = item.input;
 
-            this.log(`[Clean] [${+index + 1}/${this.queue.length}] Cleaning "${name}"`);
+            // If we are only cleaning one file, don't log the queue details
+            if (this.queue.length > 1) {
+                this.log(`[Clean] [${+index + 1}/${this.queue.length}] Cleaning "${name}"`);
+            }
+
             try {
                 await this.cleanFile(item);
             } catch (error) {
