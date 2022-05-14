@@ -15,7 +15,7 @@
   "/listen to\\s*:/",
   "/open\\s*subtitles/",
   "/synchro by\\s*(:|)/",
-  "/synchronisation\\s*:/",
+  "/synchroni(?:zed|sation) by/",
   "/translation\\s*:/",
   "/yify|yts/",
   "1337x",
