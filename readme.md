@@ -26,7 +26,7 @@ If using Bazarr, please see the [wiki page](https://github.com/DrKain/subclean/w
 
 ```
 Usage: subclean [options]
-Single: subclean subtitle.srt -w
+Example: subclean subtitle.srt -w
 Bulk: subclean --sweep "path/to/media"
 
 Options:
@@ -46,6 +46,7 @@ Options:
 
       v- You likely do not need to use these -v
 
+      --nochains   Attempt to match and remove chained nodes. Experimental.
       --depth      How many sub-directories to look when sweep cleaning
       --debug      Display extra debugging information
       --help       Show the text you're reading now
