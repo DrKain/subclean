@@ -37,6 +37,7 @@ class SubClean {
             silent: argv.silent || argv.s || false,
             version: argv.version || argv.v || false,
             update: argv.update || false,
+            chainedads: argv.a || argv.chainedads || false,
             sweep: argv.sweep || '',
             depth: argv.depth ?? 10,
             ne: argv['ne'] || false,
@@ -308,8 +309,11 @@ class SubClean {
                 // For debugging
                 this.nodes_count += nodes.length;
 
+                //Chained ads flag
+                const checkForChainedAds:boolean = item.chainedads;
+
                 // Remove ads
-                nodes.forEach((node: any, index) => {
+                nodes.forEach((node: any, index:number) => {
                     this.blacklist.forEach((mark: any) => {
                         let regex = null;
                         this.actions_count++;
@@ -322,8 +326,9 @@ class SubClean {
                                 this.log(`[Match] Advertising found in node ${index + 1} (${mark})`);
                                 if (this.args.debug) this.log('[Line] ' + nodeText);
                                 hits++;
-                                if(index === 0) node.data.text = '';
-                                else{
+                                node.data.text = '';
+                                
+                                if (index > 0 && checkForChainedAds){
                                     const previousNodeText = (nodes[index-1].data as Cue).text;
                                     if(nodeText.includes(previousNodeText)){
                                         for(let i=index-1; i>0; i--){

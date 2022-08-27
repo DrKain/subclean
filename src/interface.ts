@@ -37,6 +37,10 @@ export interface IArguments {
      */
     silent: boolean;
     /**
+     * Attempt to remove chained ads (s su sub subt...)
+     */
+     chainedads: boolean;
+    /**
      * Expects directory. This will clean multiple files across multiple directories and subdirectories.
      * Use the depth parameter to limit how many directories deep subclean will look.
      */
