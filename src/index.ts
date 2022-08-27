@@ -1,10 +1,10 @@
 #! /usr/bin/env node
 import { statSync, existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from 'fs';
 import { dirname, join, resolve, extname, basename } from 'path';
-import { parseSync, stringifySync, Format, Cue, NodeList } from 'subtitle';
+import { parseSync, stringifySync, Format, NodeList } from 'subtitle';
+import { IArguments, INode } from './interface';
 import { help_text } from './help';
 import { get } from 'https';
-import { IArguments } from './interface';
 
 const argv = require('minimist')(process.argv.slice(2));
 const updateNotifier = require('update-notifier');
@@ -37,11 +37,11 @@ class SubClean {
             silent: argv.silent || argv.s || false,
             version: argv.version || argv.v || false,
             update: argv.update || false,
-            chainedads: argv.a || argv.chainedads || false,
             sweep: argv.sweep || '',
             depth: argv.depth ?? 10,
             ne: argv['ne'] || false,
 
+            nochains: argv.nochains || false,
             testing: argv.testing || false,
             uf: argv.uf || 'default'
         } as IArguments;
@@ -303,52 +303,72 @@ class SubClean {
                 // Remove all cases of \r (parser can not handle these)
                 fileData = fileData.replace(/\r/g, ' ');
 
-                const nodes:NodeList = parseSync(fileData);
+                const nodes: INode[] = parseSync(fileData) as INode[];
                 let hits = 0;
 
                 // For debugging
                 this.nodes_count += nodes.length;
 
-                //Chained ads flag
-                const checkForChainedAds:boolean = item.chainedads;
-
                 // Remove ads
-                nodes.forEach((node: any, index:number) => {
+                nodes.forEach((node: INode, index: number) => {
                     this.blacklist.forEach((mark: any) => {
                         let regex = null;
                         this.actions_count++;
-                        const nodeText:string = node.data.text;
+                        const text = node.data.text;
+
+                        /**
+                         * Clean chained nodes based on current match
+                         * https://github.com/DrKain/subclean/pull/20
+                         */
+                        const handle_chain = (): { nodes: string[]; range: string } => {
+                            const removed = [];
+                            let range = `${index + 1}-${index + 1}`;
+
+                            if (index > 0 && item.nochains) {
+                                const prev = nodes[index - 1];
+
+                                if (text.includes(prev.data.text)) {
+                                    for (let i = index - 1; i > 0; i--) {
+                                        const check = nodes[i].data.text;
+                                        if (check.length === 0) continue; // Ignore empty string nodes
+                                        if (!text.includes(check)) break; // Chain stopped
+
+                                        hits++;
+                                        removed.push(nodes[i].data.text);
+
+                                        range = `${index + 1 - removed.length}-${index + 1}`;
+                                        nodes[i].data.text = '';
+                                    }
+                                }
+                            }
+
+                            return { nodes: removed, range };
+                        };
+
+                        // Clean the current node
+                        const clean = () => {
+                            if (this.args.debug) this.log('[Line] ' + text);
+
+                            // Requires --nochains param
+                            const chain = handle_chain();
+
+                            if (chain.nodes.length > 1) {
+                                this.log(`[Match] Chain found at ${chain.range} (${mark})`);
+                                hits += chain.nodes.length;
+                            } else {
+                                this.log(`[Match] Advertising found in node ${index + 1} (${mark})`);
+                                hits++;
+                                node.data.text = '';
+                            }
+                        };
 
                         if (mark.startsWith('/') && mark.endsWith('/')) {
                             // remove first and last characters
                             regex = new RegExp(mark.substring(1, mark.length - 1), 'i');
-                            if (regex.exec(nodeText)) {
-                                this.log(`[Match] Advertising found in node ${index + 1} (${mark})`);
-                                if (this.args.debug) this.log('[Line] ' + nodeText);
-                                hits++;
-                                node.data.text = '';
-                                
-                                if (index > 0 && checkForChainedAds){
-                                    const previousNodeText = (nodes[index-1].data as Cue).text;
-                                    if(nodeText.includes(previousNodeText)){
-                                        for(let i=index-1; i>0; i--){
-                                            const currentIterationText = (nodes[i].data as Cue).text;
-                                            if(currentIterationText.length === 0) continue; //ignore empty string nodes
-                                            if(!nodeText.includes(currentIterationText)) break;//chain stopped
-                                            
-                                            hits++;
-                                            (nodes[i].data as Cue).text = '';
-                                        }
-                                    }
-                                }
-                            }
+                            if (regex.exec(text)) clean();
                         } else {
-                            if (node.data.text.toLowerCase().includes(mark)) {
-                                this.log(`[Match] Advertising found in node ${index + 1} (${mark})`);
-                                if (this.args.debug) this.log('[Line] ' + node.data.text);
-                                hits++;
-                                node.data.text = '';
-                            }
+                            // Plain text matches
+                            if (node.data.text.toLowerCase().includes(mark)) clean();
                         }
                     });
                 });
@@ -374,7 +394,7 @@ class SubClean {
                 }
 
                 // Stringify cleaned subtitles
-                const cleaned = stringifySync(nodes, { format: item.ext as Format });
+                const cleaned = stringifySync(nodes as NodeList, { format: item.ext as Format });
 
                 // Write cleaned file
                 if (this.args.testing === false) {
