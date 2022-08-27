@@ -37,6 +37,10 @@ export interface IArguments {
      */
     silent: boolean;
     /**
+     * Attempt to remove chained ads
+     */
+    nochains: boolean;
+    /**
      * Expects directory. This will clean multiple files across multiple directories and subdirectories.
      * Use the depth parameter to limit how many directories deep subclean will look.
      */
@@ -69,4 +73,9 @@ export interface IArguments {
      * Use filters: appdata or internal
      */
     uf: 'default' | 'appdata' | 'internal';
+}
+export interface INode {
+    data: {
+        text: string;
+    };
 }
