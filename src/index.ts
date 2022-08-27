@@ -1,7 +1,7 @@
 #! /usr/bin/env node
 import { statSync, existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from 'fs';
 import { dirname, join, resolve, extname, basename } from 'path';
-import { parseSync, stringifySync, Format } from 'subtitle';
+import { parseSync, stringifySync, Format, Cue, NodeList } from 'subtitle';
 import { help_text } from './help';
 import { get } from 'https';
 import { IArguments } from './interface';
@@ -37,6 +37,7 @@ class SubClean {
             silent: argv.silent || argv.s || false,
             version: argv.version || argv.v || false,
             update: argv.update || false,
+            chainedads: argv.a || argv.chainedads || false,
             sweep: argv.sweep || '',
             depth: argv.depth ?? 10,
             ne: argv['ne'] || false,
@@ -302,26 +303,44 @@ class SubClean {
                 // Remove all cases of \r (parser can not handle these)
                 fileData = fileData.replace(/\r/g, ' ');
 
-                const nodes = parseSync(fileData);
+                const nodes:NodeList = parseSync(fileData);
                 let hits = 0;
 
                 // For debugging
                 this.nodes_count += nodes.length;
 
+                //Chained ads flag
+                const checkForChainedAds:boolean = item.chainedads;
+
                 // Remove ads
-                nodes.forEach((node: any, index) => {
+                nodes.forEach((node: any, index:number) => {
                     this.blacklist.forEach((mark: any) => {
                         let regex = null;
                         this.actions_count++;
+                        const nodeText:string = node.data.text;
 
                         if (mark.startsWith('/') && mark.endsWith('/')) {
                             // remove first and last characters
                             regex = new RegExp(mark.substring(1, mark.length - 1), 'i');
-                            if (regex.exec(node.data.text)) {
+                            if (regex.exec(nodeText)) {
                                 this.log(`[Match] Advertising found in node ${index + 1} (${mark})`);
-                                if (this.args.debug) this.log('[Line] ' + node.data.text);
+                                if (this.args.debug) this.log('[Line] ' + nodeText);
                                 hits++;
                                 node.data.text = '';
+                                
+                                if (index > 0 && checkForChainedAds){
+                                    const previousNodeText = (nodes[index-1].data as Cue).text;
+                                    if(nodeText.includes(previousNodeText)){
+                                        for(let i=index-1; i>0; i--){
+                                            const currentIterationText = (nodes[i].data as Cue).text;
+                                            if(currentIterationText.length === 0) continue; //ignore empty string nodes
+                                            if(!nodeText.includes(currentIterationText)) break;//chain stopped
+                                            
+                                            hits++;
+                                            (nodes[i].data as Cue).text = '';
+                                        }
+                                    }
+                                }
                             }
                         } else {
                             if (node.data.text.toLowerCase().includes(mark)) {
