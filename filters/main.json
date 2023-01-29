@@ -1,5 +1,6 @@
 [
   "[gwc]",
+  "/^©/",
   "/(1080|720|360)p/",
   "/(encoded|resync)\\s*(by|:)/",
   "/(gmail|outlook\\.com|hotmail|pm\\.me|protonmail)/",
