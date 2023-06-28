@@ -217,7 +217,7 @@ class SubClean {
 
                 // Make sure it's not a directory
                 if (statSync(this.args.input).isDirectory()) {
-                    this.kill('Input file was detected to be a directory', true);
+                    this.kill('Input file was detected to be a directory. Please use --sweep "path/to/media" to clean whole directories.', true);
                 }
 
                 // Prevent accidentally overwriting a file
