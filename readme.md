@@ -44,8 +44,6 @@ Options:
                    in multiple directories (and sub-directories)
                    This will enable --overwrite!
 
-      v- You likely do not need to use these -v
-
       --nochains   Attempt to match and remove chained nodes. Experimental.
       --depth      How many sub-directories to look when sweep cleaning
       --debug      Display extra debugging information
