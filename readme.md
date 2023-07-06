@@ -78,7 +78,7 @@ This project was made by **Kain (ksir.pw)**
 
 -   Website: [ksir.pw](https://ksir.pw)
 -   Github: [@DrKain](https://github.com/DrKain)
--   Discord: Kain#6880
+-   Discord: kainsir
 
 ## 🤝 Contributing
 
