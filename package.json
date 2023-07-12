@@ -5,7 +5,7 @@
     "main": "lib/index.js",
     "scripts": {
         "ver": "nvm use 14.18.0",
-        "test": "ts-node src/index.ts subtitle.srt --ne -w --uf=internal --nochains",
+        "test": "ts-node src/index.ts subtitle.srt --ne -w --uf=internal --nochains --debug --testing",
         "build": "tsc && pkg . && npm run tidy",
         "tidy": "ts-node postbuild.ts"
     },
@@ -22,18 +22,19 @@
     "author": "Kain (ksir.pw)",
     "license": "MIT",
     "dependencies": {
+        "@types/subtitle": "^2.0.3",
         "minimist": "^1.2.5",
         "subtitle": "^4.0.1",
         "update-notifier": "^5.1.0"
     },
     "devDependencies": {
-        "fs-extra": "^9.1.0",
-        "pkg": "^4.5.1",
-        "typescript": "^4.2.4",
         "@typescript-eslint/eslint-plugin": "^5.17.0",
         "@typescript-eslint/parser": "^5.17.0",
         "eslint": "^8.12.0",
-        "prettier": "^2.3.0"
+        "fs-extra": "^9.1.0",
+        "pkg": "^4.5.1",
+        "prettier": "^2.3.0",
+        "typescript": "^4.2.4"
     },
     "pkg": {
         "out-path": "./bin/",
