@@ -177,6 +177,15 @@ class SubClean {
                 this.args.sweep = '.';
             }
 
+            // Inside the prepare() method
+            if (this.args.input !== '') {
+                const filename = basename(this.args.input);
+                const match = filename.match(/\.(\w+)\.srt$/);
+                if (match) {
+                    this.args.languageCode = match[1];
+                }
+            }
+
             // Fetch files for multi-cleaning
             if (this.args.sweep) {
                 // Validate the sweep directory exists
@@ -217,7 +226,10 @@ class SubClean {
 
                 // Make sure it's not a directory
                 if (statSync(this.args.input).isDirectory()) {
-                    this.kill('Input file was detected to be a directory. Please use --sweep "path/to/media" to clean whole directories.', true);
+                    this.kill(
+                        'Input file was detected to be a directory. Please use --sweep "path/to/media" to clean whole directories.',
+                        true
+                    );
                 }
 
                 // Prevent accidentally overwriting a file
@@ -249,7 +261,10 @@ class SubClean {
      * TODO: Support for custom filters, also in appdata
      * @param filter Name of the blacklist filter
      */
-    public loadBlacklist(filter: string) {
+    public loadBlacklist(filter: string, languageCode?: string) {
+        // Inside the loadBlacklist() method
+        let target = join(this.fd, `${filter}-${languageCode || 'main'}.json`);
+
         if (this.loaded.includes(filter)) return;
         try {
             // We want to use appdata for this if possible
@@ -308,6 +323,16 @@ class SubClean {
 
                 // For debugging
                 this.nodes_count += nodes.length;
+
+                // Load the appropriate filters based on the language code
+                if (item.languageCode) {
+                    const filterName = `${item.languageCode}-main`;
+                    this.loadBlacklist(filterName, item.languageCode);
+                    this.log(`[Info] Language code detected: ${item.languageCode}. Applying language-based filters.`);
+                } else {
+                    this.loadBlacklist('main');
+                    this.log('[Info] Defaulting to main filters');
+                }
 
                 // Remove ads
                 nodes.forEach((node: INode, index: number) => {

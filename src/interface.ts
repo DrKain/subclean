@@ -79,6 +79,13 @@ export interface IArguments {
      * Use filters: appdata or internal
      */
     uf: 'default' | 'appdata' | 'internal';
+    /**
+     * Language code to specify the language of the subtitle file.
+     * The language code is used to apply language-based filters during the cleaning process.
+     * If the language code is detected from the input file name (format: filename.lang.srt),
+     * it will be automatically populated in this field.
+     */
+    languageCode?: string;
 }
 
 export interface INode {
