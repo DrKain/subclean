@@ -6,6 +6,7 @@
     "scripts": {
         "ver": "nvm use 14.18.0",
         "test": "ts-node src/index.ts subtitle.srt --ne -w --uf=internal --nochains --debug --testing",
+        "test-de": "ts-node src/index.ts subtitle.de.srt --ne -w --uf=internal --nochains --debug --testing",
         "build": "tsc && pkg . && npm run tidy",
         "tidy": "ts-node postbuild.ts"
     },
