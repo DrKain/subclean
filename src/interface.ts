@@ -79,6 +79,13 @@ export interface IArguments {
      * Use filters: appdata or internal
      */
     uf: 'default' | 'appdata' | 'internal';
+    /**
+     * Force the loading of filters for certain languages. Format must be the
+     * ISO 639-1 language codes seperated by a comma. Must be 2 characters,
+     * anything else will be ignored by the program.
+     * EG: --lang=en,de
+     */
+    lang: string;
 }
 
 export interface INode {

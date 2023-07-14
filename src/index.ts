@@ -19,7 +19,6 @@ class SubClean {
     public queue: IArguments[];
 
     // For debugging
-    private timer: string = '[Debug] Finished in';
     private actions_count: number = 0;
     private nodes_count: number = 0;
     private filter_count: number = 0;
@@ -40,6 +39,7 @@ class SubClean {
             sweep: argv.sweep || '',
             depth: argv.depth ?? 10,
             ne: argv['ne'] || false,
+            lang: argv['lang'] || '',
 
             nochains: argv.nochains || false,
             testing: argv.testing || false,
@@ -177,6 +177,16 @@ class SubClean {
                 this.args.sweep = '.';
             }
 
+            // Extract language codes
+            if (this.args.input !== '') {
+                const filename = basename(this.args.input);
+                const match = filename.match(/\.(\w+)\.srt$/);
+                if (match) {
+                    this.log(`[Info] Language codes matched: ${match}`);
+                    this.args.lang = match[1];
+                }
+            }
+
             // Fetch files for multi-cleaning
             if (this.args.sweep) {
                 // Validate the sweep directory exists
@@ -217,7 +227,10 @@ class SubClean {
 
                 // Make sure it's not a directory
                 if (statSync(this.args.input).isDirectory()) {
-                    this.kill('Input file was detected to be a directory. Please use --sweep "path/to/media" to clean whole directories.', true);
+                    this.kill(
+                        'Input file was detected to be a directory. Please use --sweep "path/to/media" to clean whole directories.',
+                        true
+                    );
                 }
 
                 // Prevent accidentally overwriting a file
@@ -245,16 +258,17 @@ class SubClean {
 
     /**
      * Load all the items in a blacklist filter into the current blacklist
-     * TODO: Move filters to appdata
-     * TODO: Support for custom filters, also in appdata
-     * @param filter Name of the blacklist filter
+     * @param file Target blacklist file
      */
-    public loadBlacklist(filter: string) {
-        if (this.loaded.includes(filter)) return;
+    public loadBlacklist(file: string) {
+        let target = join(this.fd, `${file}.json`);
+
+        if (this.loaded.includes(file)) return;
         try {
             // We want to use appdata for this if possible
             let internal = false;
-            let target = join(this.getPath(), 'filters', `${filter}.json`);
+            target = join(this.getPath(), 'filters', file);
+            if (!target.endsWith('.json')) target += '.json';
 
             // Let people know where subclean is looking for
             if (this.args.debug && this.args.uf === 'appdata') {
@@ -263,29 +277,27 @@ class SubClean {
 
             // If the appdata file doesn't exist, use the internal filters
             if (!existsSync(target) || this.args.uf === 'internal') {
-                target = join(this.fd, `${filter}.json`);
+                target = join(this.fd, `${file}.json`);
                 internal = true;
             }
 
             // If it still doesn't exist, return
             if (!existsSync(target)) {
-                if (filter !== 'custom') {
-                    this.log('[Info] Unable to locate filter: ' + filter);
-                }
+                if (file !== 'custom') this.log('[Info] Unable to locate filter: ' + file);
                 return;
             }
 
             const items = JSON.parse(readFileSync(target, 'utf-8'));
 
             this.blacklist = [...this.blacklist, ...items];
-            this.loaded.push(filter);
+            this.loaded.push(file);
 
             if (this.args.debug) {
                 this.filter_count += items.length;
-                this.log(`[Filter] [${internal ? 'int' : 'app'}] Added ${items.length} items from filter '${filter}'`);
+                this.log(`[Filter] [${internal ? 'int' : 'app'}] Added ${items.length} items from filter '${file}'`);
             }
         } catch (e) {
-            this.log('[Error] Failed to load a filter: ' + filter);
+            this.log('[Error] Failed to load a filter: ' + file);
         }
     }
 
@@ -308,6 +320,21 @@ class SubClean {
 
                 // For debugging
                 this.nodes_count += nodes.length;
+
+                // To avoid duplicates
+                const codes: string[] = [];
+                for (const c of item.lang.split(',')) {
+                    if (!codes.includes(c) && c.length === 2) codes.push(c);
+                }
+
+                // Loop through each language and try to load the filters
+                if (codes.length > 0) {
+                    if (this.args.debug) this.log('[Info] Attempting to load language filters: ' + codes.join(','));
+                    for (const code of codes) {
+                        const filter = `${code}-main.json`;
+                        this.loadBlacklist(filter);
+                    }
+                }
 
                 // Remove ads
                 nodes.forEach((node: INode, index: number) => {
@@ -347,8 +374,6 @@ class SubClean {
 
                         // Clean the current node
                         const clean = () => {
-                            if (this.args.debug) this.log('[Line] ' + text);
-
                             // Requires --nochains param
                             const chain = handle_chain();
 
@@ -360,6 +385,9 @@ class SubClean {
                                 hits++;
                                 node.data.text = '';
                             }
+
+                            // Log the line for debugging
+                            if (this.args.debug) this.log('[Line] ' + text);
                         };
 
                         if (mark.startsWith('/') && mark.endsWith('/')) {
@@ -454,13 +482,20 @@ class SubClean {
                 let data = '';
                 res.on('data', (chunk) => (data += chunk));
                 res.on('end', () => {
-                    writeFileSync(save_to, data);
+                    // If the filter does not exist, delete the file
+                    if (data.includes('404: Not Found')) {
+                        this.log('[Info] 404 from filter, deleting ' + name);
+                        unlinkSync(save_to);
+                        resolve(false);
+                    } else {
+                        writeFileSync(save_to, data);
 
-                    if (statSync(save_to).size !== current) {
-                        this.log(`[Info] Downloaded new filters for: ${name}`);
+                        if (statSync(save_to).size !== current) {
+                            this.log(`[Info] Downloaded new filters for: ${name}`);
+                        }
+
+                        resolve(name);
                     }
-
-                    resolve(name);
                 });
             }).on('error', (err) => {
                 this.log(`[Error] ${err}`);
@@ -480,18 +515,52 @@ class SubClean {
     }
 
     public async updateFilters() {
-        let $app = this.getPath();
-        let $filters = join($app, 'filters');
-        let $logs = join($app, 'logs');
+        return new Promise(async (resolve) => {
+            let $app = this.getPath();
+            let $filters = join($app, 'filters');
 
-        try {
-            this.ensureDirs();
-            // Download both filters
-            await this.downloadFilter('main');
-            await this.downloadFilter('users');
-        } catch (error) {
-            this.log(`[Error] ${error}`);
-        }
+            // Filters to download
+            let queue = ['main', 'users', 'main', 'users'];
+
+            // To de-dupe filter queue
+            const dedupe = (arr: any[]) => {
+                return arr.filter((value: any, index: any, a: string | any[]) => a.indexOf(value) === index);
+            };
+
+            try {
+                // Make sure the appdata dir exists
+                this.ensureDirs();
+
+                // Check for existing filters and add them to the queue
+                const files = readdirSync($filters);
+                for (const file of files) queue.push(file.replace('.json', ''));
+
+                // Add custom language filters
+                // To download, pass --lang=de with the --update param
+                const codes: string[] = [];
+                for (const c of this.args.lang.split(',')) {
+                    if (!codes.includes(c) && c.length === 2) codes.push(c);
+                }
+                for (const c of codes) queue.push(`${c}-main`);
+                this.log('[Info] Received language codes: ' + codes.join(','));
+
+                // De-dupe the queue
+                queue = dedupe(queue);
+                this.log('[Info] Filter download queue: ' + queue.join(','));
+
+                // Loop through the queue and download the filters
+                for (const file of queue) {
+                    const result = await this.downloadFilter(file.replace('.json', ''));
+                    if (!result) this.log('[Info] Filter download failed: ' + file);
+                    else this.log('[Info] Updated filter: ' + file);
+                }
+
+                resolve(1);
+            } catch (error) {
+                this.log(`[Error] ${error}`);
+                resolve(0);
+            }
+        });
     }
 
     public async init() {

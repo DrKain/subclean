@@ -1,11 +1,12 @@
 {
     "name": "subclean",
-    "version": "1.5.0",
+    "version": "1.5.1",
     "description": "A CLI package to clean subtitle files of advertising",
     "main": "lib/index.js",
     "scripts": {
         "ver": "nvm use 14.18.0",
-        "test": "ts-node src/index.ts subtitle.srt --ne -w --uf=internal --nochains --debug --testing",
+        "test": "ts-node src/index.ts subtitle.srt --ne -w --uf=appdata --nochains --testing --debug --lang=de",
+        "test-update": "ts-node src/index.ts --update",
         "build": "tsc && pkg . && npm run tidy",
         "tidy": "ts-node postbuild.ts"
     },
