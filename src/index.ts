@@ -550,9 +550,11 @@ class SubClean {
 
                 // Loop through the queue and download the filters
                 for (const file of queue) {
-                    const result = await this.downloadFilter(file.replace('.json', ''));
-                    if (!result) this.log('[Info] Filter download failed: ' + file);
-                    else this.log('[Info] Updated filter: ' + file);
+                    if (file !== 'custom') {
+                        const result = await this.downloadFilter(file.replace('.json', ''));
+                        if (!result) this.log('[Info] Filter download failed: ' + file);
+                        else this.log('[Info] Updated filter: ' + file);
+                    }
                 }
 
                 resolve(1);
