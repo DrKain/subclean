@@ -542,7 +542,7 @@ class SubClean {
                     if (!codes.includes(c) && c.length === 2) codes.push(c);
                 }
                 for (const c of codes) queue.push(`${c}-main`);
-                this.log('[Info] Received language codes: ' + codes.join(','));
+                if (codes.length > 0) this.log('[Info] Received language codes: ' + codes.join(','));
 
                 // De-dupe the queue
                 queue = dedupe(queue);
