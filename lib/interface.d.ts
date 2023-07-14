@@ -74,12 +74,12 @@ export interface IArguments {
      */
     uf: 'default' | 'appdata' | 'internal';
     /**
-     * Language code to specify the language of the subtitle file.
-     * The language code is used to apply language-based filters during the cleaning process.
-     * If the language code is detected from the input file name (format: filename.lang.srt),
-     * it will be automatically populated in this field.
+     * Force the loading of filters for certain languages. Format must be the
+     * ISO 639-1 language codes seperated by a comma. Must be 2 characters,
+     * anything else will be ignored by the program.
+     * EG: --lang=en,de
      */
-    languageCode?: string;
+    lang: string;
 }
 export interface INode {
     data: {
