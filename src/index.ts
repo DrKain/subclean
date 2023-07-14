@@ -520,7 +520,7 @@ class SubClean {
             let $filters = join($app, 'filters');
 
             // Filters to download
-            let queue = ['main', 'users', 'main', 'users'];
+            let queue = ['main', 'users'];
 
             // To de-dupe filter queue
             const dedupe = (arr: any[]) => {
