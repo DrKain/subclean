@@ -5,7 +5,7 @@
     "main": "lib/index.js",
     "scripts": {
         "ver": "nvm use 14.18.0",
-        "test": "ts-node src/index.ts subtitle.srt --ne -w --uf=appdata --nochains --testing --debug --lang=de",
+        "test": "ts-node src/index.ts --sweep \"samples\" --uf=appdata --debug --ne",
         "test-update": "ts-node src/index.ts --update",
         "build": "tsc && pkg . && npm run tidy",
         "tidy": "ts-node postbuild.ts"
