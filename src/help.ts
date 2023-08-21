@@ -16,11 +16,15 @@ Options:
       --update     Download the latest filters from GitHub
                    This will not update subclean, only the filters!
 
+      --lang      Force the loading of filters for certain languages. Format must be the
+                  ISO 639-1 language codes seperated by a comma. Must be 2 characters,
+                  anything else will be ignored by the program.
+                  EG: --lang=en,de
+
       --sweep      Bulk subtitle cleaning. Searches for subtitles
                    in multiple directories (and sub-directories)
                    This will enable --overwrite!
-
-      v- You likely do not need to use these -v
+                   EG: --sweep "D:/Media/Movies"
 
       --nochains   Attempt to match and remove chained nodes.
       --depth      How many sub-directories to look when sweep cleaning
