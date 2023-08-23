@@ -248,11 +248,9 @@ class SubClean {
     private writeLogs() {
         try {
             const target = join(this.getPath(), 'logs', 'latest.txt');
-            writeFileSync(target, this.log_data);
-            console.log('[Debug] Logs written to ' + target);
+            this.saveFile(this.log_data, target);
         } catch (error) {
-            console.log('Unable to write logs');
-            console.log(`${error}`);
+            console.log(`[error] ${error}`);
         }
     }
 
@@ -426,7 +424,7 @@ class SubClean {
 
                 // Write cleaned file
                 if (this.args.testing === false) {
-                    writeFileSync(item.output, cleaned);
+                    this.saveFile(cleaned, item.output, true);
                 }
 
                 if (hits > 0) this.log(`[Done] Removed ${hits} node(s) and wrote to ${item.output}`);
@@ -470,6 +468,19 @@ class SubClean {
         return target;
     }
 
+    public saveFile(data: string, location: string, to_utf8: boolean = false): Promise<any> {
+        return new Promise(async (resolve) => {
+            try {
+                this.log('[Info] Save file: ' + location);
+                writeFileSync(location, data);
+                resolve(true);
+            } catch (error) {
+                this.log('[error] Failed to save: ' + error);
+                resolve(false);
+            }
+        });
+    }
+
     public downloadFilter(name: string) {
         return new Promise((resolve) => {
             let url = `https://raw.githubusercontent.com/DrKain/subclean/main/filters/${name}.json`;
@@ -481,14 +492,14 @@ class SubClean {
             get(url, (res) => {
                 let data = '';
                 res.on('data', (chunk) => (data += chunk));
-                res.on('end', () => {
+                res.on('end', async () => {
                     // If the filter does not exist, delete the file
                     if (data.includes('404: Not Found')) {
                         this.log('[Info] 404 from filter, deleting ' + name);
                         unlinkSync(save_to);
                         resolve(false);
                     } else {
-                        writeFileSync(save_to, data);
+                        await this.saveFile(data, save_to);
 
                         if (statSync(save_to).size !== current) {
                             this.log(`[Info] Downloaded new filters for: ${name}`);
