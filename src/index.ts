@@ -10,6 +10,8 @@ const argv = require('minimist')(process.argv.slice(2));
 const updateNotifier = require('update-notifier');
 const pkg = require('../package.json');
 
+let noFsOutput = false;
+
 class SubClean {
     public args: IArguments;
     public fd: string;
@@ -304,11 +306,11 @@ class SubClean {
      * @param item Queue item
      * @returns IArguments
      */
-    public cleanFile(item: IArguments): Promise<IArguments> {
+    public cleanFile(item: IArguments, raw: string): Promise<string> {
         return new Promise((done, reject) => {
             try {
                 // Parse the subtitle file
-                let fileData = readFileSync(item.input, 'utf-8');
+                let fileData = raw || readFileSync(item.input, 'utf-8');
 
                 // Remove all cases of \r (parser can not handle these)
                 fileData = fileData.replace(/\r/g, ' ');
@@ -415,7 +417,7 @@ class SubClean {
                 }
 
                 // Remove input file
-                if (item.clean && this.args.testing == false) {
+                if (!noFsOutput && item.clean && this.args.testing == false) {
                     unlinkSync(item.input);
                 }
 
@@ -423,7 +425,7 @@ class SubClean {
                 const cleaned = stringifySync(nodes as NodeList, { format: item.ext as Format });
 
                 // Write cleaned file
-                if (this.args.testing === false) {
+                if (!noFsOutput && this.args.testing === false) {
                     this.saveFile(cleaned, item.output, true);
                 }
 
@@ -438,7 +440,7 @@ class SubClean {
                 }
 
                 // Resolve the promise
-                done(item);
+                done(cleaned);
             } catch (error) {
                 if (`${error}`.includes('expected timestamp at')) {
                     this.log(`[Error] Unable to parse "${item.input}"`);
@@ -600,12 +602,30 @@ class SubClean {
             }
 
             try {
-                await this.cleanFile(item);
+                await this.cleanFile(item, '');
             } catch (error) {
                 this.log(`[Error] ${error}`);
             }
         }
     }
+
+    public async module(raw: string, opts: IArguments) {
+        this.ensureDirs();
+        // Load the blacklist
+        this.loadBlacklist('main');
+        this.loadBlacklist('users');
+        this.loadBlacklist('custom');
+
+        Object.assign(this.args, opts);
+
+        return this.cleanFile(this.args, raw);
+    }
 }
 
-new SubClean().init();
+module.exports = SubClean;
+
+if (require.main === module) {
+    new SubClean().init();
+} else {
+    noFsOutput = true;
+}

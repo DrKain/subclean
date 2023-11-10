@@ -8,7 +8,8 @@
         "test": "ts-node src/index.ts --sweep \"samples\" --uf=appdata --debug --ne",
         "test-update": "ts-node src/index.ts --update",
         "build": "tsc && pkg . && npm run tidy",
-        "tidy": "ts-node postbuild.ts"
+        "tidy": "ts-node postbuild.ts",
+        "postinstall": "tsc"
     },
     "keywords": [
         "subtitle",
@@ -26,7 +27,8 @@
         "@types/subtitle": "^2.0.3",
         "minimist": "^1.2.5",
         "subtitle": "^4.0.1",
-        "update-notifier": "^5.1.0"
+        "update-notifier": "^5.1.0",
+        "typescript": "^4.2.4"
     },
     "devDependencies": {
         "@typescript-eslint/eslint-plugin": "^5.17.0",
@@ -34,8 +36,7 @@
         "eslint": "^8.12.0",
         "fs-extra": "^9.1.0",
         "pkg": "^4.5.1",
-        "prettier": "^2.3.0",
-        "typescript": "^4.2.4"
+        "prettier": "^2.3.0"
     },
     "pkg": {
         "out-path": "./bin/",
