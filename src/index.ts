@@ -38,7 +38,7 @@ class SubClean {
             update: argv.update || false,
             sweep: argv.sweep || '',
             depth: argv.depth ?? 10,
-            ne: argv['ne'] || false,
+            ne: argv['ne'] || true,
             lang: argv['lang'] || '',
 
             nochains: argv.nochains || false,
