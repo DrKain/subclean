@@ -478,6 +478,7 @@ class SubClean {
                 if (`${error}`.includes('expected timestamp at')) {
                     this.log(`[Error] Unable to parse "${item.input}"`);
                     this.log(`[Error] Please create an issue on GitHub with a copy of this file.\n`);
+                    this.log('[Error] I highly recommend finding another subtitle in the mean time.');
                 }
                 reject(error);
             }
