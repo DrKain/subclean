@@ -2,10 +2,11 @@
 import { statSync, existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from 'fs';
 import { dirname, join, resolve, extname, basename } from 'path';
 import { parseSync, stringifySync, Format, NodeList } from 'subtitle';
-import { IArguments, INode } from './interface';
+import { IArguments, IFE, INode } from './interface';
 import { help_text } from './help';
 import { get } from 'https';
 
+const getEncoding = require('detect-file-encoding-and-language');
 const argv = require('minimist')(process.argv.slice(2));
 const updateNotifier = require('update-notifier');
 const pkg = require('../package.json');
@@ -299,19 +300,53 @@ class SubClean {
         }
     }
 
+    private getFileEncoding(input: string): Promise<IFE> {
+        return new Promise((resolve) => {
+            try {
+                getEncoding(input).then((data: IFE) => resolve(data));
+            } catch (error) {
+                this.log(`[Error] ${error}`);
+                resolve({
+                    encoding: 'unknown',
+                    language: 'unknown',
+                    confidence: { encoding: 0, language: 0 }
+                });
+            }
+        });
+    }
+
+    private fixEncoding(path: string): Promise<boolean> {
+        return new Promise((resolve) => {
+            try {
+                let data = readFileSync(path);
+                writeFileSync(path, data, { encoding: 'utf-8' });
+                resolve(true);
+            } catch (error) {
+                resolve(false);
+            }
+        });
+    }
+
     /**
      * Clean a subtitle file using the desired config
      * @param item Queue item
      * @returns IArguments
      */
     public cleanFile(item: IArguments): Promise<IArguments> {
-        return new Promise((done, reject) => {
+        return new Promise(async (done, reject) => {
             try {
+                // Check encoding and language of the file
+                const { encoding, language }: IFE = await this.getFileEncoding(item.input);
+                this.log(`[Info] Encoding: ${encoding}, Language: ${language}`);
+
+                // re-encode to utf-8 if it's an unsupported format
+                if (encoding !== 'UTF-8') {
+                    this.log(`[Info] Fixing encoding. ${encoding} to UTF-8`);
+                    await this.fixEncoding(item.input);
+                }
+
                 // Parse the subtitle file
                 let fileData = readFileSync(item.input, 'utf-8');
-
-                // Remove all cases of \r (parser can not handle these)
-                fileData = fileData.replace(/\r/g, ' ');
 
                 const nodes: INode[] = parseSync(fileData) as INode[];
                 let hits = 0;

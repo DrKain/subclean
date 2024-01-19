@@ -93,3 +93,12 @@ export interface INode {
         text: string;
     };
 }
+
+export interface IFE {
+    encoding: string;
+    language: string;
+    confidence: {
+        encoding: number;
+        language: number;
+    };
+}
