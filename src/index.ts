@@ -319,7 +319,7 @@ class SubClean {
         return new Promise((resolve) => {
             try {
                 let data = readFileSync(path);
-                writeFileSync(path, data, { encoding: 'utf-8' });
+                writeFileSync(path, data, { encoding: 'ascii' });
                 resolve(true);
             } catch (error) {
                 resolve(false);
@@ -339,14 +339,14 @@ class SubClean {
                 const { encoding, language }: IFE = await this.getFileEncoding(item.input);
                 this.log(`[Info] Encoding: ${encoding}, Language: ${language}`);
 
-                // re-encode to utf-8 if it's an unsupported format
-                if (encoding !== 'UTF-8') {
-                    this.log(`[Info] Fixing encoding. ${encoding} to UTF-8`);
+                // re-encode if it's an unsupported format
+                if (encoding !== 'ascii') {
+                    this.log(`[Info] Fixing encoding. ${encoding} to ascii`);
                     await this.fixEncoding(item.input);
                 }
 
                 // Parse the subtitle file
-                let fileData = readFileSync(item.input, 'utf-8');
+                let fileData = readFileSync(item.input, { encoding: 'ascii' });
 
                 const nodes: INode[] = parseSync(fileData) as INode[];
                 let hits = 0;
