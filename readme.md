@@ -104,7 +104,7 @@ subclean.cleanRaw(testdata).then(console.log);
 
 Result:
 
-```srt
+```
 1
 00:00:27,319 --> 00:00:28,820
 Or you can remove that annoying ad using subclean!
