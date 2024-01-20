@@ -6,6 +6,7 @@
     "scripts": {
         "ver": "nvm use 14.18.0",
         "test": "ts-node src/index.ts --testing -w -i subtitle.srt",
+        "npmtest": "ts-node test.ts",
         "test-update": "ts-node src/index.ts --update",
         "build": "tsc && pkg . && ts-node postbuild.ts"
     },
