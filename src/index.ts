@@ -11,13 +11,16 @@ const argv = require('minimist')(process.argv.slice(2));
 const updateNotifier = require('update-notifier');
 const pkg = require('../package.json');
 
-class SubClean {
+export class SubClean {
     public args: IArguments;
     public fd: string;
     public blacklist: string[];
     public supported: string[];
     public loaded: string[];
     public queue: IArguments[];
+    public noFileOutput: boolean = false;
+    public silent: boolean = false;
+    public logtofile: boolean = true;
 
     // For debugging
     private actions_count: number = 0;
@@ -48,6 +51,8 @@ class SubClean {
             testing: argv.testing || false,
             uf: argv.uf || 'default'
         } as IArguments;
+
+        this.silent = this.args.silent;
 
         if (typeof this.args.sweep !== 'string') {
             this.args.sweep = '.';
@@ -103,7 +108,7 @@ class SubClean {
      * @param msg Message
      */
     public log(msg: any) {
-        if (!this.args.silent) console.log(msg);
+        if (!this.silent) console.log(msg);
         this.log_data += `${msg}\n`;
     }
 
@@ -154,7 +159,7 @@ class SubClean {
             }
 
             // Notify if there's a new update
-            if (!this.args.nocheck) {
+            if (this.args.nocheck === false && this.noFileOutput === true) {
                 const notifier = updateNotifier({ pkg, updateCheckInterval: 1000 * 60 * 60 });
 
                 if (notifier.update) {
@@ -253,7 +258,7 @@ class SubClean {
             const target = join(this.getPath(), 'logs', 'latest.txt');
             this.saveFile(this.log_data, target);
         } catch (error) {
-            console.log(`[error] ${error}`);
+            this.log(`[error] ${error}`);
         }
     }
 
@@ -326,9 +331,56 @@ class SubClean {
         return new Promise((resolve) => {
             try {
                 let data = readFileSync(input);
-                if (!item.testing) {
-                    writeFileSync(input, data, { encoding: encoding });
+                if (item.testing === false) {
+                    this.saveFile(`${data}`, input, encoding);
                 }
+                resolve(true);
+            } catch (error) {
+                resolve(false);
+            }
+        });
+    }
+
+    private readFile(target: string, encoding: BufferEncoding = 'utf-8'): Promise<string | null> {
+        return new Promise((resolve) => {
+            try {
+                const data = readFileSync(target, { encoding: encoding });
+                resolve(data);
+            } catch (error) {
+                this.log(error);
+                resolve(null);
+            }
+        });
+    }
+
+    /**
+     * Clean raw subtitle text instead of a file
+     * @param text Raw subtitle text
+     * @param config Config for cleaning the file
+     * @returns string Cleaned subtitle text
+     */
+    public cleanRaw(text: string, config?: Partial<IArguments>): Promise<string> {
+        return new Promise(async (resolve, reject) => {
+            this.ensureDirs();
+
+            // Load the blacklist
+            this.loadBlacklist('main');
+            this.loadBlacklist('users');
+            this.loadBlacklist('custom');
+
+            Object.assign(this.args, config || {});
+
+            const ok = await this.testData(text);
+            if (!ok) return reject('Error: Unable to parse subtitles');
+
+            return this.clean(this.args, text).then(resolve).catch(reject);
+        });
+    }
+
+    private testData(data: string): Promise<boolean> {
+        return new Promise((resolve) => {
+            try {
+                parseSync(data) as INode[];
                 resolve(true);
             } catch (error) {
                 resolve(false);
@@ -341,32 +393,38 @@ class SubClean {
      * @param item Queue item
      * @returns IArguments
      */
-    public cleanFile(item: IArguments): Promise<IArguments> {
+    public clean(item: IArguments, text?: string): Promise<string> {
         return new Promise(async (done, reject) => {
             try {
-                // Check encoding and language of the file
-                const { encoding, language }: IFE = await this.getFileEncoding(item.input);
-                this.log(`[Info] Encoding: ${encoding}, Language: ${language}`);
+                let fileData;
 
-                // To allow users to force an encoding
-                const alang = ['english', 'en', null, 'null'];
-                if (item.encodefile === 'notenglish' && alang.includes(language) === false) {
-                    item.encoding = 'ascii';
-                    this.log(`[Info] Language is ${language}, using ${item.encoding}`);
+                if (text == undefined) {
+                    // Check encoding and language of the file
+                    const { encoding, language }: IFE = await this.getFileEncoding(item.input);
+                    this.log(`[Info] Encoding: ${encoding}, Language: ${language}`);
+
+                    // To allow users to force an encoding
+                    const alang = ['english', 'en', null, 'null'];
+                    if (item.encodefile === 'notenglish' && alang.includes(language) === false) {
+                        item.encoding = 'ascii';
+                        this.log(`[Info] Language is ${language}, using ${item.encoding}`);
+                    }
+
+                    if (item.encodefile === 'never') {
+                        this.log('[Info] encodefile is "never", this may prevent some subtitles from being processed');
+                    }
+
+                    // re-encode if it's needed
+                    if (encoding !== item.encoding && item.encodefile !== 'never') {
+                        await this.fixEncoding(item);
+                        this.log(`[Info] Updated file encoding: ${encoding} -> ${item.encoding}`);
+                    }
+
+                    // Parse the subtitle file
+                    fileData = readFileSync(item.input, { encoding: item.encoding });
+                } else {
+                    fileData = text;
                 }
-
-                if (item.encodefile === 'never') {
-                    this.log('[Info] encodefile is "never", this may prevent some subtitles from being processed');
-                }
-
-                // re-encode if it's needed
-                if (encoding !== item.encoding && item.encodefile !== 'never') {
-                    await this.fixEncoding(item);
-                    this.log(`[Info] Updated file encoding: ${encoding} -> ${item.encoding}`);
-                }
-
-                // Parse the subtitle file
-                let fileData = readFileSync(item.input, { encoding: item.encoding });
 
                 const nodes: INode[] = parseSync(fileData) as INode[];
                 let hits = 0;
@@ -426,7 +484,7 @@ class SubClean {
                         };
 
                         // Clean the current node
-                        const clean = () => {
+                        const cleanNode = () => {
                             // Requires --nochains param
                             const chain = handle_chain();
 
@@ -446,10 +504,10 @@ class SubClean {
                         if (mark.startsWith('/') && mark.endsWith('/')) {
                             // remove first and last characters
                             regex = new RegExp(mark.substring(1, mark.length - 1), 'i');
-                            if (regex.exec(text)) clean();
+                            if (regex.exec(text)) cleanNode();
                         } else {
                             // Plain text matches
-                            if (node.data.text.toLowerCase().includes(mark)) clean();
+                            if (node.data.text.toLowerCase().includes(mark)) cleanNode();
                         }
                     });
                 });
@@ -482,8 +540,11 @@ class SubClean {
                     this.saveFile(cleaned, item.output);
                 }
 
-                if (hits > 0) this.log(`[Done] Removed ${hits} node(s) and wrote to ${item.output}`);
-                else this.log('[Done] No advertising found\n');
+                if (hits > 0) {
+                    const ll = [`[Done] Removed ${hits} node(s)`, `and wrote to ${item.output}`];
+                    if (this.noFileOutput) ll.pop();
+                    this.log(ll.join(' '));
+                } else this.log('[Done] No advertising found\n');
 
                 if (this.args.debug) {
                     this.log('[Debug] ' + this.actions_count.toLocaleString() + ' checks');
@@ -493,7 +554,7 @@ class SubClean {
                 }
 
                 // Resolve the promise
-                done(item);
+                done(cleaned);
             } catch (error) {
                 if (`${error}`.includes('expected timestamp at')) {
                     this.log(`[Error] Unable to parse "${item.input}"`);
@@ -527,8 +588,12 @@ class SubClean {
     public saveFile(data: string, location: string, e: BufferEncoding = 'utf-8'): Promise<any> {
         return new Promise(async (resolve) => {
             try {
-                this.log('[Info] Save file: ' + location);
-                writeFileSync(location, data, { encoding: e });
+                if (this.noFileOutput === false) {
+                    if (this.args.testing === false) {
+                        this.log('[Info] Save file: ' + location);
+                        writeFileSync(location, data, { encoding: e });
+                    }
+                }
                 resolve(true);
             } catch (error) {
                 this.log('[error] Failed to save: ' + error);
@@ -656,7 +721,7 @@ class SubClean {
             }
 
             try {
-                await this.cleanFile(item);
+                await this.clean(item);
             } catch (error) {
                 this.log(`[Error] ${error}`);
             }
@@ -664,4 +729,15 @@ class SubClean {
     }
 }
 
-new SubClean().init();
+export let subclean: SubClean;
+
+if (require.main === module) {
+    new SubClean().init();
+} else {
+    subclean = new SubClean();
+    subclean.noFileOutput = true;
+    subclean.silent = true;
+    subclean.logtofile = false;
+}
+
+export * from './interface';
