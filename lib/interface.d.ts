@@ -1,3 +1,4 @@
+/// <reference types="node" />
 export interface IArguments {
     /**
      * Subtitle file to clean.
@@ -54,6 +55,14 @@ export interface IArguments {
      * Download new filters from GitHub
      */
     update: boolean;
+    /**
+     * Forced file encoding
+     */
+    encoding: BufferEncoding;
+    /**
+     * Condition to switch from utf-8 to ascii
+     */
+    encodefile: 'always' | 'never' | 'notenglish';
     /**
      * File extension. Used to check for .vtt or .srt
      */

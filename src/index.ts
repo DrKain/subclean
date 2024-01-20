@@ -41,6 +41,8 @@ class SubClean {
             depth: argv.depth ?? 10,
             ne: argv['ne'] || true,
             lang: argv['lang'] || '',
+            encoding: argv['encoding'] || 'utf-8',
+            encodefile: argv['encodefile'] || 'notenglish',
 
             nochains: argv.nochains || false,
             testing: argv.testing || false,
@@ -303,7 +305,10 @@ class SubClean {
     private getFileEncoding(input: string): Promise<IFE> {
         return new Promise((resolve) => {
             try {
-                getEncoding(input).then((data: IFE) => resolve(data));
+                getEncoding(input).then((data: IFE) => {
+                    data.encoding = data.encoding.toLowerCase();
+                    resolve(data);
+                });
             } catch (error) {
                 this.log(`[Error] ${error}`);
                 resolve({
@@ -315,11 +320,15 @@ class SubClean {
         });
     }
 
-    private fixEncoding(path: string): Promise<boolean> {
+    private fixEncoding(item: IArguments): Promise<boolean> {
+        const { input, encoding } = item;
+
         return new Promise((resolve) => {
             try {
-                let data = readFileSync(path);
-                writeFileSync(path, data, { encoding: 'ascii' });
+                let data = readFileSync(input);
+                if (!item.testing) {
+                    writeFileSync(input, data, { encoding: encoding });
+                }
                 resolve(true);
             } catch (error) {
                 resolve(false);
@@ -339,14 +348,25 @@ class SubClean {
                 const { encoding, language }: IFE = await this.getFileEncoding(item.input);
                 this.log(`[Info] Encoding: ${encoding}, Language: ${language}`);
 
-                // re-encode if it's an unsupported format
-                if (encoding !== 'ascii') {
-                    this.log(`[Info] Fixing encoding. ${encoding} to ascii`);
-                    await this.fixEncoding(item.input);
+                // To allow users to force an encoding
+                const alang = ['english', 'en', null, 'null'];
+                if (item.encodefile === 'notenglish' && alang.includes(language) === false) {
+                    item.encoding = 'ascii';
+                    this.log(`[Info] Language is ${language}, using ${item.encoding}`);
+                }
+
+                if (item.encodefile === 'never') {
+                    this.log('[Info] encodefile is "never", this may prevent some subtitles from being processed');
+                }
+
+                // re-encode if it's needed
+                if (encoding !== item.encoding && item.encodefile !== 'never') {
+                    await this.fixEncoding(item);
+                    this.log(`[Info] Updated file encoding: ${encoding} -> ${item.encoding}`);
                 }
 
                 // Parse the subtitle file
-                let fileData = readFileSync(item.input, { encoding: 'ascii' });
+                let fileData = readFileSync(item.input, { encoding: item.encoding });
 
                 const nodes: INode[] = parseSync(fileData) as INode[];
                 let hits = 0;
@@ -459,7 +479,7 @@ class SubClean {
 
                 // Write cleaned file
                 if (this.args.testing === false) {
-                    this.saveFile(cleaned, item.output, true);
+                    this.saveFile(cleaned, item.output);
                 }
 
                 if (hits > 0) this.log(`[Done] Removed ${hits} node(s) and wrote to ${item.output}`);
@@ -504,11 +524,11 @@ class SubClean {
         return target;
     }
 
-    public saveFile(data: string, location: string, to_utf8: boolean = false): Promise<any> {
+    public saveFile(data: string, location: string, e: BufferEncoding = 'utf-8'): Promise<any> {
         return new Promise(async (resolve) => {
             try {
                 this.log('[Info] Save file: ' + location);
-                writeFileSync(location, data);
+                writeFileSync(location, data, { encoding: e });
                 resolve(true);
             } catch (error) {
                 this.log('[error] Failed to save: ' + error);
