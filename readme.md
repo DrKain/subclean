@@ -5,7 +5,7 @@
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/DrKain/subclean/graphs/commit-activity)
 [![License: MIT](https://img.shields.io/github/license/DrKain/subclean)](https://github.com/DrKain/subclean/blob/master/LICENSE)
 
-> A powerful CLI tool to remove advertising from subtitle files. Made for personal media servers with full support for automation tools like Bazarr. Simple to use and frequently updated with new filters.
+> A powerful CLI tool and node module to remove advertising from subtitle files. Made for personal media servers with full support for automation tools like Bazarr. Simple to use and frequently updated with new filters.
 
 ![Preview](https://i.imgur.com/iM9UWzw.png)
 
@@ -22,6 +22,8 @@ Or you can build it yourself: `npm install && npm run build`
 
 ## Usage
 
+> If you are using this as a node module scroll down to the [node module/npm](#node-module) section.
+
 If using Bazarr, please see the [wiki page](https://github.com/DrKain/subclean/wiki/Bazarr).
 
 ```
@@ -32,8 +34,8 @@ Bulk: subclean --sweep "path/to/media"
 Options:
   -i, --input      The file you want to clean
   -o, --output     Where to write the cleaned file (defaults to input)
-  -w, --overwrite  Overwrite the output file if it already exists     
-  -c, --clean      Delete the input file before writing the output    
+  -w, --overwrite  Overwrite the output file if it already exists
+  -c, --clean      Delete the input file before writing the output
   -v, --version    Display current version
   -n, --no-check   Don't check for a new package version
   -s, --silent     Silent mode. Nothing logged to console
@@ -45,6 +47,7 @@ Options:
                    This will enable --overwrite!
 
       --nochains   Attempt to match and remove chained nodes. Experimental.
+      --encodefile To change the file encoding when the language is not english. Use either always, never, notenglish
       --depth      How many sub-directories to look when sweep cleaning
       --debug      Display extra debugging information
       --help       Show the text you're reading now
@@ -71,6 +74,60 @@ The location of these files may differ depending on what OS you are using.
 If the downloaded filters do not exist or can not be accessed the internal filters will be used instead
 
 You can create `custom.json` alongside the downloaded filters. Subclean will automatically load this and apply it when cleaning. You can verify this is being loaded by running `subclean --debug`. You should see a message similar to `Loaded n filters from custom`
+
+## Node Module
+
+As of 1.6.2 and above this can now be used as a node module, allowing you to pass raw text through the `cleanRaw` function. Usage is as follows:
+
+```npm
+npm install subclean --save
+```
+
+```ts
+import { subclean } from 'subclean';
+
+const testdata = `1
+00:00:06,000 --> 00:00:12,074
+Watch Movies, TV Series and Live Sports
+Signup Here -> WWW.ADMITME.APP
+
+2
+00:00:27,319 --> 00:00:28,820
+Or you can remove that annoying ad using subclean!
+
+3
+00:00:28,903 --> 00:00:30,447
+Now with support for node modules.`;
+
+subclean.cleanRaw(testdata).then(console.log);
+```
+
+Result:
+
+```srt
+1
+00:00:27,319 --> 00:00:28,820
+Or you can remove that annoying ad using subclean!
+
+2
+00:00:28,903 --> 00:00:30,447
+Now with support for node modules.
+```
+
+You can still pass arguments to customize the process.
+
+```ts
+const config = { nochains: true, ne: true };
+subclean.cleanRaw(testdata, config).then(console.log);
+```
+
+If the data is invalid you will receive an error
+
+```ts
+const testdata = `this is invalid data`;
+subclean.cleanRaw(testdata).then(console.log).catch(console.log);
+// Error: Unable to parse subtitles
+```
 
 ## 👤 Author
 
