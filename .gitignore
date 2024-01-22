@@ -110,3 +110,4 @@ bin/
 subtitle.srt
 samples/
 test.ts
+tests/
