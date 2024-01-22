@@ -331,24 +331,13 @@ export class SubClean {
         return new Promise((resolve) => {
             try {
                 let data = readFileSync(input);
+
                 if (item.testing === false) {
                     this.saveFile(`${data}`, input, encoding);
                 }
                 resolve(true);
             } catch (error) {
                 resolve(false);
-            }
-        });
-    }
-
-    private readFile(target: string, encoding: BufferEncoding = 'utf-8'): Promise<string | null> {
-        return new Promise((resolve) => {
-            try {
-                const data = readFileSync(target, { encoding: encoding });
-                resolve(data);
-            } catch (error) {
-                this.log(error);
-                resolve(null);
             }
         });
     }
@@ -406,7 +395,7 @@ export class SubClean {
                     // To allow users to force an encoding
                     const alang = ['english', 'en', null, 'null'];
                     if (item.encodefile === 'notenglish' && alang.includes(language) === false) {
-                        item.encoding = 'ascii';
+                        item.encoding = 'utf8';
                         this.log(`[Info] Language is ${language}, using ${item.encoding}`);
                     }
 
@@ -537,7 +526,7 @@ export class SubClean {
 
                 // Write cleaned file
                 if (this.args.testing === false) {
-                    this.saveFile(cleaned, item.output);
+                    this.saveFile(cleaned, item.output, item.encoding);
                 }
 
                 if (hits > 0) {
