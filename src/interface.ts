@@ -54,14 +54,6 @@ export interface IArguments {
      * Download new filters from GitHub
      */
     update: boolean;
-    /**
-     * Forced file encoding
-     */
-    encoding: BufferEncoding;
-    /**
-     * Condition to switch from utf-8 to ascii
-     */
-    encodefile: 'always' | 'never' | 'notenglish';
 
     // Set by code, do not change
 
