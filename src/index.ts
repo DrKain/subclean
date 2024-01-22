@@ -46,8 +46,6 @@ export class SubClean {
             depth: argv.depth ?? 10,
             ne: argv['ne'] || true,
             lang: argv['lang'] || '',
-            encoding: argv['encoding'] || 'utf-8',
-            encodefile: argv['encodefile'] || 'notenglish',
 
             nochains: argv.nochains || false,
             testing: argv.testing || false,
