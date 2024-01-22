@@ -47,7 +47,6 @@ Options:
                    This will enable --overwrite!
 
       --nochains   Attempt to match and remove chained nodes. Experimental.
-      --encodefile To change the file encoding when the language is not english. Use either always, never, notenglish
       --depth      How many sub-directories to look when sweep cleaning
       --debug      Display extra debugging information
       --help       Show the text you're reading now
