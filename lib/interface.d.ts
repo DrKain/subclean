@@ -58,7 +58,7 @@ export interface IArguments {
     /**
      * Forced file encoding
      */
-    encoding: BufferEncoding;
+    encoding: BufferEncoding | any;
     /**
      * Condition to switch from utf-8 to ascii
      */

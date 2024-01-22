@@ -44,7 +44,7 @@ export class SubClean {
             depth: argv.depth ?? 10,
             ne: argv['ne'] || true,
             lang: argv['lang'] || '',
-            encoding: argv['encoding'] || 'utf-8',
+            encoding: argv['encoding'] || 'utf16le',
             encodefile: argv['encodefile'] || 'notenglish',
 
             nochains: argv.nochains || false,
@@ -396,7 +396,7 @@ export class SubClean {
     public clean(item: IArguments, text?: string): Promise<string> {
         return new Promise(async (done, reject) => {
             try {
-                let fileData;
+                let fileData: any;
 
                 if (text == undefined) {
                     // Check encoding and language of the file
@@ -406,7 +406,8 @@ export class SubClean {
                     // To allow users to force an encoding
                     const alang = ['english', 'en', null, 'null'];
                     if (item.encodefile === 'notenglish' && alang.includes(language) === false) {
-                        item.encoding = 'ascii';
+                        // Allow user to specify custom encoding
+                        item.encoding = item.encoding || 'utf16le';
                         this.log(`[Info] Language is ${language}, using ${item.encoding}`);
                     }
 
