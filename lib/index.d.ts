@@ -1,5 +1,4 @@
 #! /usr/bin/env node
-/// <reference types="node" />
 import { IArguments } from './interface';
 export declare class SubClean {
     args: IArguments;
@@ -22,17 +21,17 @@ export declare class SubClean {
      * @param depth How many sub-directories to look through
      * @returns
      */
-    getFiles(dir: string, depth?: number): Promise<string[]>;
+    private getFiles;
     /**
      * Log a message to the console, only if subclean is not in silent mode
      * @param msg Message
      */
-    log(msg: any): void;
+    private log;
     /**
      * Kill the script after printing an error
      * @param e Error Message
      */
-    kill(e: string, err?: boolean): void;
+    private kill;
     help(): void;
     /**
      * Add a file (with config) to the queue.
@@ -40,21 +39,20 @@ export declare class SubClean {
      * @param config
      * @returns
      */
-    addToQueue(config: IArguments): void;
+    private addToQueue;
     /**
      * This is where files will be fetched and arguments validated
      * Extra information that might be needed for cleaning will also be filled
      * @returns
      */
-    prepare(): Promise<void>;
+    private prepare;
     private writeLogs;
     /**
      * Load all the items in a blacklist filter into the current blacklist
      * @param file Target blacklist file
      */
-    loadBlacklist(file: string): void;
+    private loadBlacklist;
     private getFileEncoding;
-    private fixEncoding;
     private readFile;
     /**
      * Clean raw subtitle text instead of a file
@@ -70,11 +68,11 @@ export declare class SubClean {
      * @returns IArguments
      */
     clean(item: IArguments, text?: string): Promise<string>;
-    getPath(): string;
-    saveFile(data: string, location: string, e?: BufferEncoding): Promise<any>;
-    downloadFilter(name: string): Promise<unknown>;
+    private getPath;
+    saveFile(data: string, location: string): Promise<any>;
+    private downloadFilter;
     private ensureDirs;
-    updateFilters(): Promise<unknown>;
+    private updateFilters;
     init(): Promise<void>;
 }
 export declare let subclean: SubClean;
