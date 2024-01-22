@@ -1,13 +1,13 @@
 {
     "name": "subclean",
-    "version": "1.6.3",
+    "version": "1.7.0",
     "description": "A CLI package to clean subtitle files of advertising",
     "main": "lib/index.js",
     "scripts": {
         "ver": "nvm use 14.18.0",
-        "test": "ts-node src/index.ts --testing -w -i subtitle.srt",
-        "npmtest": "ts-node test.ts",
-        "test-update": "ts-node src/index.ts --update",
+        "test": "ts-node src/index.ts -w -i subtitle.srt",
+        "test:sweep": "ts-node src/index.ts -w --sweep \"tests\"",
+        "test:update": "ts-node src/index.ts --update",
         "build": "tsc && pkg . && npm run tidy",
         "tidy": "ts-node postbuild.ts"
     },
@@ -26,10 +26,11 @@
     "dependencies": {
         "@types/subtitle": "^2.0.3",
         "detect-file-encoding-and-language": "^2.4.0",
+        "iconv-lite": "^0.6.3",
         "minimist": "^1.2.5",
         "subtitle": "^4.0.1",
-        "update-notifier": "^5.1.0",
-        "typescript": "^4.2.4"
+        "typescript": "^4.2.4",
+        "update-notifier": "^5.1.0"
     },
     "devDependencies": {
         "@typescript-eslint/eslint-plugin": "^5.17.0",
