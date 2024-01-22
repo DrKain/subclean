@@ -1,8 +1,10 @@
 #! /usr/bin/env node
 import { statSync, existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from 'fs';
-import { dirname, join, resolve, extname, basename } from 'path';
 import { parseSync, stringifySync, Format, NodeList } from 'subtitle';
+import { dirname, join, resolve, extname, basename } from 'path';
 import { IArguments, IFE, INode } from './interface';
+import { StringDecoder } from 'string_decoder';
+import iconv = require('iconv-lite');
 import { help_text } from './help';
 import { get } from 'https';
 
@@ -52,6 +54,8 @@ export class SubClean {
             uf: argv.uf || 'default'
         } as IArguments;
 
+        if (argv['debug']) console.log(argv);
+
         this.silent = this.args.silent;
 
         if (typeof this.args.sweep !== 'string') {
@@ -59,7 +63,7 @@ export class SubClean {
         }
 
         if (this.args.testing === true) {
-            this.log('[Info] Testing is enabled! File will not be saved');
+            this.log('[WARN] Testing is enabled! File will not be saved');
         }
 
         this.fd = join(__dirname, '../filters');
@@ -75,7 +79,8 @@ export class SubClean {
      * @param depth How many sub-directories to look through
      * @returns
      */
-    public getFiles(dir: string, depth = 5): Promise<string[]> {
+    private getFiles(dir: string, depth = 5): Promise<string[]> {
+        if (this.args.debug) console.log('getFiles' + [dir, depth]);
         return new Promise(async (done) => {
             const subdirs = readdirSync(dir);
             const files: string[] = [];
@@ -107,7 +112,7 @@ export class SubClean {
      * Log a message to the console, only if subclean is not in silent mode
      * @param msg Message
      */
-    public log(msg: any) {
+    private log(msg: any) {
         if (!this.silent) console.log(msg);
         this.log_data += `${msg}\n`;
     }
@@ -116,7 +121,7 @@ export class SubClean {
      * Kill the script after printing an error
      * @param e Error Message
      */
-    public kill(e: string, err = true) {
+    private kill(e: string, err = true) {
         this.log((err ? '[Error] ' : '') + `${e}`);
         process.exit(0);
     }
@@ -132,7 +137,7 @@ export class SubClean {
      * @param config
      * @returns
      */
-    public addToQueue(config: IArguments) {
+    private addToQueue(config: IArguments) {
         let exists = this.queue.find((item) => item.input === config.input);
         if (exists) return this.log(`[Error] Duplicate in queue '${config.input}'`);
         else {
@@ -147,7 +152,7 @@ export class SubClean {
      * Extra information that might be needed for cleaning will also be filled
      * @returns
      */
-    public async prepare() {
+    private async prepare() {
         try {
             // Display help message
             if (this.args.help) this.help();
@@ -249,6 +254,7 @@ export class SubClean {
                 this.addToQueue(this.args);
             }
         } catch (error) {
+            if (this.args.debug) console.log(error);
             this.kill(`${error}`, true);
         }
     }
@@ -266,7 +272,7 @@ export class SubClean {
      * Load all the items in a blacklist filter into the current blacklist
      * @param file Target blacklist file
      */
-    public loadBlacklist(file: string) {
+    private async loadBlacklist(file: string) {
         let target = join(this.fd, `${file}.json`);
 
         if (this.loaded.includes(file)) return;
@@ -293,7 +299,7 @@ export class SubClean {
                 return;
             }
 
-            const items = JSON.parse(readFileSync(target, 'utf-8'));
+            const items = JSON.parse(await this.readFile(target));
 
             this.blacklist = [...this.blacklist, ...items];
             this.loaded.push(file);
@@ -325,19 +331,16 @@ export class SubClean {
         });
     }
 
-    private fixEncoding(item: IArguments): Promise<boolean> {
-        const { input, encoding } = item;
-
+    private readFile(target: string, encoding: string = 'utf-8'): Promise<string> {
         return new Promise((resolve) => {
             try {
-                let data = readFileSync(input);
-
-                if (item.testing === false) {
-                    this.saveFile(`${data}`, input, encoding);
-                }
-                resolve(true);
+                const data = readFileSync(target);
+                const decoded = iconv.decode(data, encoding);
+                if (this.args.debug) this.log(`[debug] readFile: [${encoding}] ${target}`);
+                resolve(decoded);
             } catch (error) {
-                resolve(false);
+                this.log(error);
+                resolve('');
             }
         });
     }
@@ -392,25 +395,8 @@ export class SubClean {
                     const { encoding, language }: IFE = await this.getFileEncoding(item.input);
                     this.log(`[Info] Encoding: ${encoding}, Language: ${language}`);
 
-                    // To allow users to force an encoding
-                    const alang = ['english', 'en', null, 'null'];
-                    if (item.encodefile === 'notenglish' && alang.includes(language) === false) {
-                        item.encoding = 'utf8';
-                        this.log(`[Info] Language is ${language}, using ${item.encoding}`);
-                    }
-
-                    if (item.encodefile === 'never') {
-                        this.log('[Info] encodefile is "never", this may prevent some subtitles from being processed');
-                    }
-
-                    // re-encode if it's needed
-                    if (encoding !== item.encoding && item.encodefile !== 'never') {
-                        await this.fixEncoding(item);
-                        this.log(`[Info] Updated file encoding: ${encoding} -> ${item.encoding}`);
-                    }
-
                     // Parse the subtitle file
-                    fileData = readFileSync(item.input, { encoding: item.encoding });
+                    fileData = await this.readFile(item.input, encoding);
                 } else {
                     fileData = text;
                 }
@@ -526,11 +512,11 @@ export class SubClean {
 
                 // Write cleaned file
                 if (this.args.testing === false) {
-                    this.saveFile(cleaned, item.output, item.encoding);
+                    this.saveFile(cleaned, item.output);
                 }
 
                 if (hits > 0) {
-                    const ll = [`[Done] Removed ${hits} node(s)`, `and wrote to ${item.output}`];
+                    const ll = [`[Done] Removed ${hits} node(s)`, `and wrote to ${item.output}\n`];
                     if (this.noFileOutput) ll.pop();
                     this.log(ll.join(' '));
                 } else this.log('[Done] No advertising found\n');
@@ -555,7 +541,7 @@ export class SubClean {
         });
     }
 
-    public getPath() {
+    private getPath() {
         let target = '';
 
         // NOTE: This was suggested by github co-pilot and is untested.
@@ -574,13 +560,19 @@ export class SubClean {
         return target;
     }
 
-    public saveFile(data: string, location: string, e: BufferEncoding = 'utf-8'): Promise<any> {
+    public saveFile(data: string, location: string): Promise<any> {
         return new Promise(async (resolve) => {
             try {
                 if (this.noFileOutput === false) {
                     if (this.args.testing === false) {
                         this.log('[Info] Save file: ' + location);
-                        writeFileSync(location, data, { encoding: e });
+
+                        // This was an absolute nightmare
+                        const decoder = new StringDecoder('utf8');
+                        const sample = Buffer.from(data);
+                        const out = decoder.write(sample);
+
+                        writeFileSync(location, out);
                     }
                 }
                 resolve(true);
@@ -591,7 +583,7 @@ export class SubClean {
         });
     }
 
-    public downloadFilter(name: string) {
+    private downloadFilter(name: string) {
         return new Promise((resolve) => {
             let url = `https://raw.githubusercontent.com/DrKain/subclean/main/filters/${name}.json`;
             let save_to = join(this.getPath(), 'filters', `${name}.json`);
@@ -635,7 +627,7 @@ export class SubClean {
         if (!existsSync($logs)) mkdirSync($logs);
     }
 
-    public async updateFilters() {
+    private async updateFilters() {
         return new Promise(async (resolve) => {
             let $app = this.getPath();
             let $filters = join($app, 'filters');
