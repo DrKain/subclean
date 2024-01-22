@@ -26,7 +26,6 @@ Options:
                    This will enable --overwrite!
                    EG: --sweep "D:/Media/Movies"
 
-      --encodefile To change the file encoding when the language is not english. Use either always, never, notenglish
       --nochains   Attempt to match and remove chained nodes.
       --depth      How many sub-directories to look when sweep cleaning
       --debug      Display extra debugging information
