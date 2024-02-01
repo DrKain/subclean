@@ -62,6 +62,7 @@ export declare class SubClean {
      */
     cleanRaw(text: string, config?: Partial<IArguments>): Promise<string>;
     private testData;
+    private verifyFileData;
     /**
      * Clean a subtitle file using the desired config
      * @param item Queue item
