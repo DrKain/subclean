@@ -378,6 +378,36 @@ export class SubClean {
         });
     }
 
+    private verifyFileData(data: string): Promise<string> {
+        const original = data;
+
+        return new Promise(async (resolve) => {
+            try {
+                // If the raw data can be parsed then we have no problem
+                if ((await this.testData(data)) === true) {
+                    return resolve(data);
+                }
+
+                // Try the modified data. If this passes we know it's a usable fix
+                const spacingFix = data.replace(/\r/g, ' ');
+                if ((await this.testData(spacingFix)) === true) {
+                    this.log('[Info] Fixed spacing in subtitle file');
+                    return resolve(spacingFix);
+                }
+
+                /*
+                If both fail, throw an error and return the original data.
+                This function can be used for fixes at another date
+                */
+
+                throw Error('verifyFileData failed');
+            } catch (error) {
+                this.log(error);
+                resolve(original);
+            }
+        });
+    }
+
     /**
      * Clean a subtitle file using the desired config
      * @param item Queue item
@@ -393,12 +423,20 @@ export class SubClean {
                     const { encoding, language }: IFE = await this.getFileEncoding(item.input);
                     this.log(`[Info] Encoding: ${encoding}, Language: ${language}`);
 
+                    if (encoding !== 'utf-8') {
+                        this.log('[Info] File encoding is not utf-8, this will be fixed');
+                    }
+
                     // Parse the subtitle file
                     fileData = await this.readFile(item.input, encoding);
                 } else {
                     fileData = text;
                 }
 
+                // Ensure the data can be parsed, also tries to fix bad data
+                fileData = await this.verifyFileData(fileData);
+
+                // Parse the nodes
                 const nodes: INode[] = parseSync(fileData) as INode[];
                 let hits = 0;
 
