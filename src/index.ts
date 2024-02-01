@@ -670,6 +670,7 @@ export class SubClean {
 
             // Filters to download
             let queue = ['main', 'users'];
+            let valid = ['ar', 'de', 'nl', 'ru'];
 
             // To de-dupe filter queue
             const dedupe = (arr: any[]) => {
@@ -686,10 +687,18 @@ export class SubClean {
 
                 // Add custom language filters
                 // To download, pass --lang=de with the --update param
-                const codes: string[] = [];
+                let codes: string[] = [];
                 for (const c of this.args.lang.split(',')) {
                     if (!codes.includes(c) && c.length === 2) codes.push(c);
                 }
+
+                // Or use "all" to download all filters --update --lang=all
+                if (this.args.lang.toLowerCase() === 'all') {
+                    codes = [];
+                    for (const c of valid) codes.push(c);
+                }
+
+                // Loop through add to queue
                 for (const c of codes) queue.push(`${c}-main`);
                 if (codes.length > 0) this.log('[Info] Received language codes: ' + codes.join(','));
 
