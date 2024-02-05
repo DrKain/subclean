@@ -22,7 +22,6 @@ export class SubClean {
     public queue: IArguments[];
     public noFileOutput: boolean = false;
     public silent: boolean = false;
-    public logtofile: boolean = true;
 
     // For debugging
     private actions_count: number = 0;
@@ -351,7 +350,7 @@ export class SubClean {
      */
     public cleanRaw(text: string, config?: Partial<IArguments>): Promise<string> {
         return new Promise(async (resolve, reject) => {
-            this.ensureDirs();
+            await this.ensureDirs();
 
             // Load the blacklist
             this.loadBlacklist('main');
@@ -553,7 +552,7 @@ export class SubClean {
 
                 if (hits > 0) {
                     const ll = [`[Done] Removed ${hits} node(s)`, `and wrote to ${item.output}\n`];
-                    if (this.noFileOutput) ll.pop();
+                    if (this.noFileOutput || item.output === '') ll.pop();
                     this.log(ll.join(' '));
                 } else this.log('[Done] No advertising found\n');
 
@@ -600,7 +599,7 @@ export class SubClean {
         return new Promise(async (resolve) => {
             try {
                 if (this.noFileOutput === false) {
-                    if (this.args.testing === false) {
+                    if (this.args.testing === false && location !== '') {
                         this.log('[Info] Save file: ' + location);
 
                         // This was an absolute nightmare
@@ -613,6 +612,7 @@ export class SubClean {
                 }
                 resolve(true);
             } catch (error) {
+                this.log('[Error] ' + location);
                 this.log('[error] Failed to save: ' + error);
                 resolve(false);
             }
@@ -654,13 +654,33 @@ export class SubClean {
     }
 
     private ensureDirs() {
-        let $app = this.getPath();
-        let $filters = join($app, 'filters');
-        let $logs = join($app, 'logs');
-        // Ensure user directories exist
-        if (!existsSync($app)) mkdirSync($app);
-        if (!existsSync($filters)) mkdirSync($filters);
-        if (!existsSync($logs)) mkdirSync($logs);
+        return new Promise(async (resolve) => {
+            // If no file output, return instantly
+            if (this.noFileOutput) {
+                if (this.args.debug) this.log('noFileOutput is true');
+                return resolve(0);
+            }
+
+            let $app = this.getPath();
+            let $filters = join($app, 'filters');
+            let $logs = join($app, 'logs');
+            let ftr = false;
+            // Ensure user directories exist
+            if (!existsSync($app)) {
+                this.log('First time running, downloading filters');
+                mkdirSync($app);
+                ftr = true;
+            }
+            if (!existsSync($filters)) mkdirSync($filters);
+            if (!existsSync($logs)) mkdirSync($logs);
+
+            // if this is the first time running we can download new filters
+            if (ftr && this.noFileOutput === false) {
+                await this.updateFilters();
+            }
+
+            resolve(1);
+        });
     }
 
     private async updateFilters() {
@@ -679,7 +699,7 @@ export class SubClean {
 
             try {
                 // Make sure the appdata dir exists
-                this.ensureDirs();
+                await this.ensureDirs();
 
                 // Check for existing filters and add them to the queue
                 const files = readdirSync($filters);
@@ -724,7 +744,7 @@ export class SubClean {
     }
 
     public async init() {
-        this.ensureDirs();
+        await this.ensureDirs();
         // Load the blacklist
         this.loadBlacklist('main');
         this.loadBlacklist('users');
@@ -763,7 +783,6 @@ if (require.main === module) {
     subclean = new SubClean();
     subclean.noFileOutput = true;
     subclean.silent = true;
-    subclean.logtofile = false;
 }
 
 export * from './interface';
