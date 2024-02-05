@@ -9,7 +9,6 @@ export declare class SubClean {
     queue: IArguments[];
     noFileOutput: boolean;
     silent: boolean;
-    logtofile: boolean;
     private actions_count;
     private nodes_count;
     private filter_count;
